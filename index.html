@@ -2760,13 +2760,9 @@ const rows = applyDisplayFilters(allRecords);
         displayLastUpdatedConfig("");
       }
 
-      // ============================================================
       // MYSQL DASHBOARD DATA LAYER
-      // ============================================================
       // The dashboard now treats MySQL/FastAPI as the authoritative
       // source for table data. MQTT is NOT merged into the table.
-      // ============================================================
-
       const MYSQL_PAGE_SIZE = 10;
       let mysqlPage = 1;
       let mysqlTotal = 0;
@@ -3483,9 +3479,7 @@ const rows = applyDisplayFilters(allRecords);
         }
       };
 
-      // ------------------------------------------------------------
       // Auto refresh
-      // ------------------------------------------------------------
       // Fetch the current MySQL page every 5 seconds.
       // This updates the dashboard without downloading the whole table.
       if (window.mpptMysqlRefreshTimer) {
@@ -3511,13 +3505,11 @@ loadMySQLPage(1);
     </script>
   
 <script>
-/* ============================================================
-   FIX: EXPORT ALL FILTERED MYSQL RECORDS
+/*FIX: EXPORT ALL FILTERED MYSQL RECORDS
    The table is paginated (10 rows/page), so getAllRecords()
    only contains the current page. Export must query FastAPI
    repeatedly and collect ALL records matching the active
-   IMEI/date filters.
-   ============================================================ */
+   IMEI/date filters.*/
 window.exportExcel = async function () {
   const EXPORT_PAGE_SIZE = 100;
   const base = (DEFAULT_API || "").trim();
