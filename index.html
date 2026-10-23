@@ -1,0 +1,3854 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MPPT Dashboard</title>
+    <link rel="icon" type="image/png" href="inglo-logo.png" />
+
+    <style>
+      :root {
+        --bg: #0d223f;
+        --panel: #0d2547;
+        --panel2: #10233a;
+        --line: #1d3854;
+        --text: #eef6ff;
+        --muted: #8fa9c2;
+        --accent: #35d0ba;
+        --blue: #4da3ff;
+        --warn: #ffc857;
+        --danger: #ff6577;
+        --good: #49dc8b;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family:
+          Inter,
+          Segoe UI,
+          Arial,
+          sans-serif;
+        background: radial-gradient(
+          circle at top right,
+          #12304b 0,
+          #07111f 45%
+        );
+        color: var(--text);
+      }
+      .wrap {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 18px 14px;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 20px;
+      }
+      h1 {
+        font-size: 25px;
+        margin: 0 0 5px;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .status {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        padding: 10px 14px;
+        border-radius: 12px;
+        font-size: 13px;
+      }
+      .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--warn);
+        box-shadow: 0 0 10px currentColor;
+      }
+      .dot.live {
+        background: var(--good);
+      }
+      .dot.err {
+        background: var(--danger);
+      }
+      .toolbar {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+        background: rgba(13, 27, 45, 0.9);
+        border: 1px solid var(--line);
+        padding: 13px;
+        border-radius: 14px;
+        margin-bottom: 18px;
+      }
+      label {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      input,
+      button {
+        font: inherit;
+      }
+      input {
+        background: #081625;
+        color: var(--text);
+        border: 1px solid #294762;
+        border-radius: 9px;
+        padding: 9px 11px;
+        outline: none;
+      }
+      input:focus {
+        border-color: var(--accent);
+      }
+      button {
+        border: 0;
+        border-radius: 9px;
+        padding: 9px 14px;
+        background: var(--accent);
+        color: #04221e;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      button.secondary {
+        background: #17304a;
+        color: var(--text);
+      }
+      .meta {
+        margin-left: auto;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 16px;
+      }
+      .panel {
+        background: rgba(13, 27, 45, 0.94);
+        border: 1px solid var(--line);
+        border-radius: 15px;
+        overflow: hidden;
+      }
+      .panel-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 17px;
+        border-bottom: 1px solid var(--line);
+      }
+      .panel-head h2 {
+        font-size: 15px;
+        margin: 0;
+      }
+      .badge {
+        font-size: 11px;
+        padding: 5px 8px;
+        border-radius: 999px;
+        background: #15314b;
+        color: #bcd9ef;
+      }
+      .table-wrap {
+        overflow: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      th,
+      td {
+        padding: 12px 14px;
+        border-bottom: 1px solid #17304a;
+        text-align: left;
+        white-space: nowrap;
+      }
+      th {
+        font-size: 11px;
+        text-transform: uppercase;
+        color: var(--muted);
+        letter-spacing: 0.5px;
+        background: #0b1a2b;
+        position: sticky;
+        top: 0;
+      }
+      tr:hover td {
+        background: #10243a;
+      }
+      .selected td {
+        background: #102d3c;
+      }
+      .ok {
+        color: var(--good);
+      }
+      .bad {
+        color: var(--danger);
+      }
+      .warn {
+        color: var(--warn);
+      }
+      .details {
+        padding: 17px;
+      }
+      .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+      .detail {
+        background: #091727;
+        border: 1px solid #18344e;
+        border-radius: 10px;
+        padding: 11px;
+      }
+      .detail span {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+        margin-bottom: 5px;
+      }
+      .detail strong {
+        font-size: 14px;
+      }
+      pre {
+        margin: 0;
+        padding: 15px;
+        background: #06111d;
+        color: #b9e9ff;
+        overflow: auto;
+        font-size: 12px;
+        line-height: 1.55;
+        max-height: 280px;
+      }
+      .footer {
+        color: var(--muted);
+        font-size: 11px;
+        margin-top: 15px;
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .error {
+        padding: 14px;
+        color: #ffd9dd;
+        background: #351722;
+        border: 1px solid #703140;
+        border-radius: 10px;
+        margin: 12px 17px;
+      }
+@media (max-width: 1100px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (max-width: 650px) {
+        .wrap {
+          padding: 10px;
+        }
+      }
+
+      .app-layout {
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+      }
+      .main-content {
+        flex: 1;
+        min-width: 0;
+      }
+      .settings-panel {
+        width: 0;
+        flex: 0 0 0;
+        overflow: hidden;
+        opacity: 0;
+        position: sticky;
+        top: 22px;
+        background: rgba(13, 27, 45, 0.98);
+        border: 1px solid transparent;
+        border-radius: 15px;
+        transition: 0.3s;
+      }
+      .app-layout.settings-open .settings-panel {
+        width: 330px;
+        flex-basis: 330px;
+        opacity: 1;
+        padding: 18px;
+        border-color: var(--line);
+      }
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .settings-btn {
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        background: #17304a;
+        color: var(--text);
+        font-size: 21px;
+        border: 1px solid #294762;
+        border-radius: 9px;
+        cursor: pointer;
+      }
+      .settings-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 14px;
+        margin-bottom: 18px;
+      }
+      .settings-head h2 {
+        margin: 0;
+        font-size: 17px;
+      }
+      .close-settings {
+        background: transparent;
+        color: var(--muted);
+        font-size: 25px;
+        padding: 2px 8px;
+      }
+      .setting-title {
+        display: block;
+        font-size: 13px;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+      .date-options {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+      }
+      .date-option {
+        display: flex;
+        gap: 9px;
+        align-items: center;
+        padding: 10px;
+        border: 1px solid #1d3854;
+        border-radius: 9px;
+        background: #081625;
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 12px;
+      }
+      .date-option.active {
+        border-color: var(--accent);
+        background: #102d3c;
+        color: var(--text);
+      }
+      .date-option input {
+        accent-color: var(--accent);
+      }
+      .custom-date {
+        display: none;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 9px;
+      }
+      .custom-date.show {
+        display: grid;
+      }
+      .custom-date input {
+        width: 100%;
+        margin-top: 5px;
+        padding: 8px;
+      }
+      @media (max-width: 900px) {
+        .app-layout.settings-open {
+          display: block;
+        }
+        .app-layout.settings-open .settings-panel {
+          position: relative;
+          top: auto;
+          width: 100%;
+          max-height: none;
+          margin-top: 16px;
+        }
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+      .brand-logo {
+        width: 250px;
+        height: 150px;
+        object-fit: contain;
+        display: block;
+      }
+      .brand-title {
+        margin: 0;
+      }
+
+      @media (max-width: 650px) {
+        .brand-logo {
+          width: 78px;
+          height: 54px;
+        }
+      }
+
+      :root[data-theme="light"] {
+        --bg: #f4f7fb;
+        --panel: #ffffff;
+        --panel2: #eef3f8;
+        --line: #d5dee8;
+        --text: #17212b;
+        --muted: #64748b;
+        --accent: #0f9f8c;
+        --blue: #2f80ed;
+        --warn: #c98a00;
+        --danger: #d94a5c;
+        --good: #159957;
+      }
+      :root[data-theme="light"] body {
+        background: radial-gradient(
+          circle at top right,
+          #e7f0f8 0,
+          #f4f7fb 48%
+        );
+        color: var(--text);
+      }
+      :root[data-theme="light"] .toolbar,
+      :root[data-theme="light"] .panel,
+      :root[data-theme="light"] .settings-panel {
+        background: rgba(255, 255, 255, 0.96);
+      }
+      :root[data-theme="light"] .card {
+        background: linear-gradient(145deg, #ffffff, #f3f7fa);
+      }
+      :root[data-theme="light"] input,
+      :root[data-theme="light"] .date-option {
+        background: #f8fafc;
+        color: var(--text);
+        border-color: #cbd5e1;
+      }
+      :root[data-theme="light"] th {
+        background: #edf3f7;
+      }
+      :root[data-theme="light"] th,
+      :root[data-theme="light"] td {
+        border-color: #dbe3ea;
+      }
+      :root[data-theme="light"] tr:hover td {
+        background: #f0f6fa;
+      }
+      :root[data-theme="light"] .selected td {
+        background: #e5f3f1;
+      }
+      :root[data-theme="light"] .detail {
+        background: #f7fafc;
+        border-color: #dbe3ea;
+      }
+      :root[data-theme="light"] pre {
+        background: #eef4f8;
+        color: #24536b;
+      }
+      :root[data-theme="light"] .badge {
+        background: #e6f0f5;
+        color: #496579;
+      }
+      :root[data-theme="light"] .settings-btn,
+      :root[data-theme="light"] .theme-btn {
+        background: #edf3f7;
+        color: #17212b;
+        border-color: #cbd5e1;
+      }
+
+      .theme-btn {
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #17304a;
+        color: var(--text);
+        border: 1px solid #294762;
+        border-radius: 9px;
+        cursor: pointer;
+        font-size: 20px;
+        line-height: 1;
+      }
+      .theme-btn:hover {
+        transform: translateY(-1px);
+      }
+      .theme-btn:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .combined-panel {
+        width: 100%;
+      }
+      .combined-panel .table-wrap {
+        max-height: none;
+        overflow-x: auto;
+        overflow-y: visible;
+      }
+      .combined-panel table {
+        min-width: 2100px;
+      }
+      .combined-panel th {
+        z-index: 2;
+      }
+      .raw-inline {
+        font-family: Consolas, Monaco, monospace;
+        font-size: 11px;
+        color: #b9e9ff;
+        white-space: normal;
+        display: block;
+        max-width: 520px;
+        line-height: 1.45;
+      }
+      .selected td {
+        background: #102d3c !important;
+        box-shadow:
+          inset 0 1px 0 rgba(53, 208, 186, 0.18),
+          inset 0 -1px 0 rgba(53, 208, 186, 0.18);
+      }
+      .combined-panel tbody tr {
+        cursor: pointer;
+      }
+
+      .status {
+        display: none !important;
+      }
+      .brand-text {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .brand-title {
+        margin: 0;
+      }
+      .sub {
+        margin-top: 3px;
+      }
+
+      .page-footer {
+        text-align: center;
+        padding: 22px 12px 10px;
+        color: var(--muted);
+        font-size: 12.5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .page-footer a {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        text-decoration: none;
+        color: inherit;
+      }
+      .page-footer a:hover {
+        opacity: 0.85;
+      }
+      .page-footer img {
+        height: 76px;
+        width: auto;
+        object-fit: contain;
+        vertical-align: middle;
+      }
+
+      .dashboard-toolbar {
+        padding: 14px 21px;
+        gap: 12px;
+        align-items: flex-end;
+        min-height: 108px;
+        background: rgba(7, 22, 37, 0.9);
+      }
+      .filter-field {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        min-width: 235px;
+      }
+      .filter-field label {
+        font-size: 12px;
+        color: #d6e4f0;
+      }
+      .filter-field input {
+        height: 46px;
+        padding: 0 12px;
+        background: #081a2c;
+        border: 1px solid #294762;
+        border-radius: 9px;
+        color: var(--text);
+      }
+      .imei-field {
+        min-width: 315px;
+        flex: 1;
+      }
+      .imei-field input {
+        font-size: 14px;
+      }
+      .dashboard-toolbar .apply-btn {
+        height: 46px;
+        min-width: 132px;
+        background: #22c9bd;
+        color: #03211f;
+      }
+      .dashboard-toolbar .secondary {
+        height: 46px;
+        background: #173b60;
+        color: #eef6ff;
+        border: 1px solid #214d74;
+      }
+      .export-btn {
+        min-width: 172px;
+      }
+      .combined-panel .panel-head {
+        padding: 18px 21px;
+      }
+      .combined-panel .panel-head h2 {
+        font-size: 17px;
+      }
+      .combined-panel .badge {
+        background: transparent;
+        color: #a9bed0;
+        padding: 0;
+        font-size: 13px;
+      }
+      .combined-panel th {
+        padding: 12px 14px;
+        height: 61px;
+        background: #0a1b2d;
+        color: #a8bdd0;
+      }
+      .combined-panel td {
+        padding: 14px;
+        font-size: 13px;
+      }
+      .combined-panel tbody tr:nth-child(odd) td {
+        background: rgba(10, 28, 45, 0.72);
+      }
+      .combined-panel tbody tr:nth-child(even) td {
+        background: rgba(5, 18, 31, 0.78);
+      }
+      .combined-panel tbody tr:hover td {
+        background: #12304a;
+      }
+
+      :root {
+        --bg: #08111f;
+        --panel: #0f1b2d;
+        --panel2: #14243a;
+        --line: #253a52;
+        --text: #f5f7fb;
+        --muted: #9eb0c3;
+        --accent: #2dd4bf;
+        --blue: #60a5fa;
+        --warn: #fbbf24;
+        --danger: #fb7185;
+        --good: #34d399;
+        --surface-soft: #0b1626;
+        --surface-raised: #122238;
+        --table-head: #102034;
+        --table-row-a: rgba(15, 29, 47, 0.84);
+        --table-row-b: rgba(8, 18, 32, 0.88);
+        --hover: #18304a;
+        --selected: #143b3a;
+        --accent-ink: #06241f;
+        --code-bg: #07131f;
+        --code-text: #bdeee6;
+      }
+
+      body {
+        background:
+          radial-gradient(
+            circle at 100% 0%,
+            rgba(45, 212, 191, 0.1),
+            transparent 26%
+          ),
+          radial-gradient(
+            circle at 0% 20%,
+            rgba(96, 165, 250, 0.08),
+            transparent 24%
+          ),
+          var(--bg);
+        color: var(--text);
+      }
+
+      .toolbar,
+      .panel,
+      .settings-panel {
+        background: rgba(15, 27, 45, 0.96);
+        border-color: var(--line);
+        box-shadow: 0 8px 26px rgba(0, 0, 0, 0.14);
+      }
+
+      .dashboard-toolbar {
+        background: rgba(11, 24, 40, 0.96);
+      }
+
+      input,
+      .date-option {
+        background: var(--surface-soft);
+        color: var(--text);
+        border-color: var(--line);
+      }
+      input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.1);
+      }
+
+      button {
+        background: var(--accent);
+        color: var(--accent-ink);
+      }
+      button.secondary,
+      .dashboard-toolbar .secondary,
+      .settings-btn,
+      .theme-btn {
+        background: var(--panel2);
+        color: var(--text);
+        border-color: var(--line);
+      }
+      .dashboard-toolbar .apply-btn {
+        background: var(--accent);
+        color: var(--accent-ink);
+      }
+
+      th {
+        background: var(--table-head);
+        color: #aebfd1;
+        border-color: var(--line);
+      }
+      th,
+      td {
+        border-bottom-color: var(--line);
+      }
+      .combined-panel th {
+        background: var(--table-head);
+        color: #b4c5d6;
+      }
+      .combined-panel tbody tr:nth-child(odd) td {
+        background: var(--table-row-a);
+      }
+      .combined-panel tbody tr:nth-child(even) td {
+        background: var(--table-row-b);
+      }
+      tr:hover td,
+      .combined-panel tbody tr:hover td {
+        background: var(--hover);
+      }
+      .selected td {
+        background: var(--selected) !important;
+      }
+
+      .detail {
+        background: var(--surface-soft);
+        border-color: var(--line);
+      }
+      .badge {
+        background: #17314b;
+        color: #c3d6e8;
+      }
+      .date-option.active {
+        border-color: var(--accent);
+        background: var(--selected);
+        color: var(--text);
+      }
+
+      pre,
+      .raw-panel pre {
+        background: var(--code-bg);
+        color: var(--code-text);
+      }
+      .raw-inline {
+        color: var(--code-text);
+      }
+
+      .page-footer {
+        color: var(--muted);
+        border-top: 1px solid var(--line);
+      }
+      .page-footer a {
+        color: var(--text);
+      }
+
+      /* Light theme: clean neutral surfaces with the same brand accents */
+      :root[data-theme="light"] {
+        --bg: #f5f8fc;
+        --panel: #ffffff;
+        --panel2: #edf3f8;
+        --line: #d7e2ec;
+        --text: #1e293b;
+        --muted: #64748b;
+        --accent: #0d9488;
+        --blue: #2563eb;
+        --warn: #b7791f;
+        --danger: #d1435b;
+        --good: #148a5b;
+        --surface-soft: #f8fafc;
+        --surface-raised: #eef4f8;
+        --table-head: #eaf1f6;
+        --table-row-a: rgba(248, 250, 252, 0.98);
+        --table-row-b: rgba(239, 244, 248, 0.98);
+        --hover: #e6f2f1;
+        --selected: #dff3ef;
+        --accent-ink: #ffffff;
+        --code-bg: #edf4f7;
+        --code-text: #24536b;
+      }
+
+      :root[data-theme="light"] body {
+        background:
+          radial-gradient(
+            circle at 100% 0%,
+            rgba(13, 148, 136, 0.08),
+            transparent 26%
+          ),
+          radial-gradient(
+            circle at 0% 20%,
+            rgba(37, 99, 235, 0.05),
+            transparent 24%
+          ),
+          var(--bg);
+      }
+
+      :root[data-theme="light"] .toolbar,
+      :root[data-theme="light"] .panel,
+      :root[data-theme="light"] .settings-panel {
+        background: rgba(255, 255, 255, 0.98);
+        box-shadow: 0 7px 22px rgba(30, 41, 59, 0.06);
+      }
+      :root[data-theme="light"] .dashboard-toolbar {
+        background: rgba(250, 252, 254, 0.98);
+      }
+      :root[data-theme="light"] input,
+      :root[data-theme="light"] .date-option {
+        background: var(--surface-soft);
+        color: var(--text);
+        border-color: var(--line);
+      }
+      :root[data-theme="light"] .detail {
+        background: var(--surface-soft);
+        border-color: var(--line);
+      }
+      :root[data-theme="light"] th,
+      :root[data-theme="light"] .combined-panel th {
+        background: var(--table-head);
+        color: #587086;
+      }
+      :root[data-theme="light"] th,
+      :root[data-theme="light"] td {
+        border-color: var(--line);
+      }
+      :root[data-theme="light"] .combined-panel tbody tr:nth-child(odd) td {
+        background: var(--table-row-a);
+      }
+      :root[data-theme="light"] .combined-panel tbody tr:nth-child(even) td {
+        background: var(--table-row-b);
+      }
+      :root[data-theme="light"] tr:hover td,
+      :root[data-theme="light"] .combined-panel tbody tr:hover td {
+        background: var(--hover);
+      }
+      :root[data-theme="light"] .selected td {
+        background: var(--selected) !important;
+      }
+      :root[data-theme="light"] .badge {
+        background: #e6eff4;
+        color: #526b80;
+      }
+      :root[data-theme="light"] .settings-btn,
+      :root[data-theme="light"] .theme-btn,
+      :root[data-theme="light"] button.secondary,
+      :root[data-theme="light"] .dashboard-toolbar .secondary {
+        background: var(--panel2);
+        color: var(--text);
+        border-color: var(--line);
+      }
+      :root[data-theme="light"] .page-footer {
+        border-top-color: var(--line);
+      }
+
+      /* Configuration panel */
+      .config-section {
+        margin-top: 22px;
+        padding-top: 18px;
+        border-top: 1px solid var(--line);
+      }
+      .config-section h3 {
+        margin: 0 0 14px;
+        font-size: 14px;
+      }
+      .config-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .config-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .config-field label {
+        font-size: 11px;
+        color: var(--muted);
+        font-weight: 600;
+      }
+      .config-field input,
+      .config-field select {
+        width: 100%;
+        height: 40px;
+        padding: 0 10px;
+        background: var(--surface-soft);
+        color: var(--text);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        outline: none;
+      }
+      .config-field input:focus,
+      .config-field select:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.1);
+      }
+      .config-field select {
+        cursor: pointer;
+      }
+      .switch-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .switch-label {
+        font-size: 11px;
+        color: var(--muted);
+        font-weight: 600;
+      }
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 48px;
+        height: 26px;
+        flex: 0 0 auto;
+      }
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .slider {
+        position: absolute;
+        inset: 0;
+        cursor: pointer;
+        background: #526579;
+        border-radius: 999px;
+        transition: 0.2s;
+      }
+      .slider:before {
+        content: "";
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        left: 3px;
+        top: 3px;
+        background: #fff;
+        border-radius: 50%;
+        transition: 0.2s;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+      }
+      .switch input:checked + .slider {
+        background: var(--accent);
+      }
+      .switch input:checked + .slider:before {
+        transform: translateX(22px);
+      }
+      .load-state {
+        font-size: 11px;
+        color: var(--muted);
+        min-width: 28px;
+        text-align: right;
+      }
+      .config-update-btn {
+        width: 100%;
+        height: 42px;
+        margin-top: 4px;
+        background: var(--accent);
+        color: var(--accent-ink);
+        border: 0;
+        border-radius: 9px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .config-update-btn:disabled {
+        background: #526579 !important;
+        color: #aeb9c4 !important;
+        cursor: not-allowed;
+        opacity: 0.65;
+      }
+      .config-message {
+        font-size: 11px;
+        line-height: 1.4;
+        margin-top: 8px;
+        min-height: 15px;
+      }
+      .config-message.ok {
+        color: var(--good);
+      }
+      .config-message.err {
+        color: var(--danger);
+      }
+      :root[data-theme="light"] .config-update-btn:disabled {
+        background: #cbd5e1 !important;
+        color: #64748b !important;
+      }
+
+      /* Light theme - dashboard filter fields */
+      :root[data-theme="light"] .dashboard-toolbar .filter-field label {
+        color: #334155;
+        font-weight: 600;
+      }
+
+      :root[data-theme="light"] .dashboard-toolbar input {
+        background: #ffffff;
+        color: #17212b;
+        border-color: #b8c5d1;
+      }
+
+      :root[data-theme="light"] .dashboard-toolbar input::placeholder {
+        color: #475569;
+        opacity: 1;
+      }
+
+      /* Date input text and calendar icon */
+      :root[data-theme="light"] .dashboard-toolbar input[type="date"] {
+        color: #17212b;
+        background: #ffffff;
+        border-color: #b8c5d1;
+        color-scheme: light;
+      }
+
+      /* Make the date value clearly visible */
+      :root[data-theme="light"]
+        .dashboard-toolbar
+        input[type="date"]::-webkit-datetime-edit,
+      :root[data-theme="light"]
+        .dashboard-toolbar
+        input[type="date"]::-webkit-datetime-edit-text,
+      :root[data-theme="light"]
+        .dashboard-toolbar
+        input[type="date"]::-webkit-datetime-edit-month-field,
+      :root[data-theme="light"]
+        .dashboard-toolbar
+        input[type="date"]::-webkit-datetime-edit-day-field,
+      :root[data-theme="light"]
+        .dashboard-toolbar
+        input[type="date"]::-webkit-datetime-edit-year-field {
+        color: #17212b;
+      }
+
+      /* Calendar icon */
+      :root[data-theme="light"]
+        .dashboard-toolbar
+        input[type="date"]::-webkit-calendar-picker-indicator {
+        opacity: 0.75;
+      }
+
+      /* 10-row table pagination */
+      .table-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        flex-wrap: wrap;
+        padding: 14px 16px;
+        border-top: 1px solid var(--line);
+        background: var(--surface-soft);
+      }
+
+      .table-pagination button {
+        min-width: 40px;
+        height: 36px;
+        padding: 0 11px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel2);
+        color: var(--text);
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .table-pagination button:hover:not(:disabled) {
+        border-color: var(--accent);
+      }
+
+      .table-pagination button.active {
+        background: var(--accent);
+        color: var(--accent-ink);
+        border-color: var(--accent);
+      }
+
+      .table-pagination button:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      .table-pagination .page-dots {
+        color: var(--muted);
+        padding: 0 2px;
+      }
+
+      .table-pagination .page-summary {
+        color: var(--muted);
+        font-size: 12px;
+        margin-left: 8px;
+        white-space: nowrap;
+      }
+
+      :root[data-theme="light"] .table-pagination {
+        background: var(--surface-raised);
+      }
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="app-layout" id="appLayout">
+        <main class="main-content">
+          <header>
+            <div class="brand">
+              <img class="brand-logo" src="inglo-logo (2).png" />
+              <div class="brand-text">
+                <h1 class="brand-title">MPPT Dashboard</h1>
+                <div class="sub">Smart Energy. Smarter Control</div>
+              </div>
+            </div>
+            <div class="header-actions">
+              <div class="status">
+                <span id="dot" class="dot"></span
+                ><span id="status">Connecting...</span>
+              </div>
+              <button
+                class="theme-btn"
+                id="themeToggle"
+                onclick="toggleTheme()"
+                title="Switch to light theme"
+                aria-label="Switch to light theme"
+              >
+                ◐</button
+              ><button
+                class="settings-btn"
+                onclick="toggleSettings()"
+                title="Settings"
+              >
+                ⚙
+              </button>
+            </div>
+          </header>
+
+          <div class="toolbar dashboard-toolbar">
+            <input
+              id="apiUrl"
+              type="hidden"
+              value="http://127.0.0.1:8000/api/telemetry"
+            />
+            <div class="filter-field">
+              <label for="dateFromTop">From Date</label
+              ><input type="date" id="dateFromTop" />
+            </div>
+            <div class="filter-field">
+              <label for="dateToTop">To Date</label
+              ><input type="date" id="dateToTop" />
+            </div>
+            <div class="filter-field imei-field">
+              <label for="imeiInput">IMEI / Search</label
+              ><input
+                id="imeiInput"
+                type="text"
+                value=""
+                placeholder="Enter IMEI or keyword"
+              />
+            </div>
+            <button class="apply-btn" onclick="applyTopFilter()">
+              Apply Filter
+            </button>
+            <button class="secondary" onclick="clearTopFilter()">Clear</button>
+            <button class="secondary export-btn" onclick="exportExcel()">
+              ⇩&nbsp; Export Excel
+            </button>
+          </div>
+
+          <div id="filterMessage" class="error" style="display:none;"></div>
+          <section class="panel combined-panel" id="recordsPanel" style="display:none;">
+            <div class="panel-head">
+              <h2>MPPT Records &amp; Details</h2>
+              <span class="badge" id="recordCount">0 records</span>
+            </div>
+            <div id="tableError"></div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Updated Time</th>
+                    <th>IMEI</th>
+                    <th>Bat V</th>
+                    <th>Bat A</th>
+                    <th>PV V</th>
+                    <th>PV Power</th>
+                    <th>Temp</th>
+                    <th>Efficiency</th>
+                    <th>Frame Slave</th>
+                    <th>Config Slave</th>
+                    <th>Fault</th>
+                    <th>Fault Status</th>
+                    <th>LVD</th>
+                    <th>Reconnect</th>
+                    <th>DTD</th>
+                    <th>Load Mode</th>
+                    <th>Load Command</th>
+                    <th>Load Status</th>
+                  </tr>
+                </thead>
+                <tbody id="rows"></tbody>
+              </table>
+            </div>
+            <div class="table-pagination" id="tablePagination" aria-label="Table pagination">
+              <button type="button" class="secondary" id="prevPageBtn" onclick="changePage(-1)">
+                ‹ Previous
+              </button>
+              <div id="pageButtons"></div>
+              <button type="button" class="secondary" id="nextPageBtn" onclick="changePage(1)">
+                Next ›
+              </button>
+            </div>
+          </section>
+        </main>
+        <aside class="settings-panel" id="settingsPanel">
+          <div class="settings-head">
+            <h2>Settings</h2>
+            <button class="close-settings" onclick="toggleSettings()">×</button>
+          </div>
+          <span class="setting-title">Date filter</span>
+          <div class="date-options">
+            <label class="date-option active"
+              ><input type="radio" name="dateFilter" value="all" checked /> All
+              Data</label
+            >
+            <label class="date-option"
+              ><input type="radio" name="dateFilter" value="today" />
+              Today</label
+            >
+            <label class="date-option"
+              ><input type="radio" name="dateFilter" value="week" /> This
+              week</label
+            >
+            <label class="date-option"
+              ><input type="radio" name="dateFilter" value="month" />
+              Month</label
+            >
+            <label class="date-option"
+              ><input type="radio" name="dateFilter" value="year" /> Year</label
+            >
+            <label class="date-option"
+              ><input type="radio" name="dateFilter" value="custom" /> Custom
+              filter</label
+            >
+          </div>
+          <div class="custom-date" id="customDate">
+            <div><label>From</label><input type="date" id="dateFrom" /></div>
+            <div><label>To</label><input type="date" id="dateTo" /></div>
+          </div>
+
+          <section class="config-section">
+            <h3>Configuration</h3>
+
+            <div class="config-grid">
+              <div class="config-field">
+                <label for="configLvd">LVD (V)</label>
+                <input
+                  id="configLvd"
+                  type="number"
+                  value="22.60"
+                  min="21.00"
+                  max="23.00"
+                  step="0.01"
+                  inputmode="decimal"
+                  placeholder="Enter LVD voltage"
+                  title="Allowed LVD range: 21.00–23.00 V"
+                />
+                <small style="font-size:10px;color:var(--muted);">Range: 21.00–23.00 V</small>
+              </div>
+
+              <div class="config-field">
+                <label for="configReconnect">RECONNECT (V)</label>
+                <input
+                  id="configReconnect"
+                  type="number"
+                  value="24.00"
+                  min="23.00"
+                  max="25.00"
+                  step="0.01"
+                  inputmode="decimal"
+                  placeholder="Enter reconnect voltage"
+                  title="Allowed RECONNECT range: 23.00–25.00 V"
+                />
+                <small style="font-size:10px;color:var(--muted);">Range: 23.00–25.00 V</small>
+              </div>
+
+              <div class="config-field">
+                <label for="configDtd">DTD (V)</label>
+                <input
+                  id="configDtd"
+                  type="number"
+                  value="27.00"
+                  min="0.00"
+                  max="30.00"
+                  step="0.01"
+                  inputmode="decimal"
+                  placeholder="Enter DTD voltage"
+                  title="Allowed DTD range: 0.00–30.00 V"
+                />
+                <small style="font-size:10px;color:var(--muted);">Range: 0.00–30.00 V</small>
+              </div>
+
+              <div class="config-field">
+                <label for="configLoadMode">LOAD MODE</label>
+                <select id="configLoadMode">
+                  <option value="0">Software / Auto</option>
+                  <option value="1">Remote (Modbus) control</option>
+                </select>
+              </div>
+
+              <div class="switch-row" id="loadControlRow">
+                <span class="switch-label">LOAD CONTROL</span>
+
+                <div style="display: flex; align-items: center; gap: 8px">
+                  <label class="switch" title="Load control ON/OFF">
+                    <input id="configLoadControl" type="checkbox" />
+                    <span class="slider"></span>
+                  </label>
+
+                  <span class="load-state" id="loadControlState">OFF</span>
+                </div>
+              </div>
+
+              <button
+                id="configUpdateBtn"
+                class="config-update-btn"
+                type="button"
+                disabled
+              >
+                UPDATE
+              </button>
+
+              <div id="lastUpdatedConfig" style="
+                margin-top:12px;
+                padding:10px;
+                border:1px solid var(--line);
+                border-radius:9px;
+                background:var(--surface-soft);
+              ">
+                <div style="font-size:11px;font-weight:700;margin-bottom:7px;">
+                  Last Updated Configuration
+                </div>
+                <div style="font-size:11px;color:var(--muted);line-height:1.7;">
+                  <div>LVD: <strong id="lastUpdatedLvd">—</strong></div>
+                  <div>RECONNECT: <strong id="lastUpdatedReconnect">—</strong></div>
+                  <div>DTD: <strong id="lastUpdatedDtd">—</strong></div>
+                  <div>LOAD MODE: <strong id="lastUpdatedLoadMode">—</strong></div>
+                  <div>LOAD CONTROL: <strong id="lastUpdatedLoadControl">—</strong></div>
+                  <div>Updated: <strong id="lastUpdatedTime">—</strong></div>
+                </div>
+              </div>
+
+              <div id="configMessage" class="config-message"></div>
+            </div>
+          </section>
+        </aside>
+      </div>
+
+      <footer class="page-footer">
+        <span>&copy; 2026 Powered by</span>
+        <a
+          href="https://www.inglo.in/"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Visit INGLO website"
+        >
+          <img src="inglo-logo (2).png" alt="INGLO" />
+        </a>
+      </footer>
+    </div>
+
+    <script>
+      const DEFAULT_API = "http://127.0.0.1:8000/api/telemetry";
+      const CONFIGURATION_API =
+  DEFAULT_API.replace(/\/telemetry\/?$/, "/configuration");
+      let selected = null;
+      let apiRecords = [];
+      let mqttRecords = JSON.parse(
+  localStorage.getItem("mppt_mqtt_records") || "[]"
+);
+
+let mqttRecordCounter = mqttRecords.reduce((max, r) => {
+  const n = Number(String(r.id || "").replace("MQTT-", ""));
+  return Number.isFinite(n) ? Math.max(max, n) : max;
+}, 0);
+
+function saveMQTTRecords() {
+  try {
+    localStorage.setItem(
+      "mppt_mqtt_records",
+      JSON.stringify(mqttRecords)
+    );
+  } catch (error) {
+    console.error("Failed to save MQTT records:", error);
+  }
+}
+      function getAllRecords() {
+        return [...apiRecords, ...mqttRecords].sort(
+          (a, b) =>
+            (new Date(b.updatedAt).getTime() || 0) -
+            (new Date(a.updatedAt).getTime() || 0),
+        );
+      }
+
+      // MQTT LIVE DATA CONFIGURATION
+      const MQTT_BROKER = "ws://broker.hivemq.com:8000/mqtt";
+      const MQTT_TOPIC = "mqtt_test@007";
+      const MQTT_CONFIG_PUBLISH_TOPIC = "mqtt_test_pub@007";
+
+      let mqttClient = null;
+      // Counter is restored from localStorage above; do not reset it here.
+
+      let mqttConnected = false;
+
+      let currentDateFilter = "all";
+      let customFrom = "";
+      let customTo = "";
+
+      let configFilter = null;
+
+      // Table pagination: exactly 10 data rows are shown on each page.
+      const ROWS_PER_PAGE = 10;
+      let currentPage = 1;
+      let currentPageRecords = [];
+
+      const CONFIG_FIELDS = [
+        "configLvd",
+        "configReconnect",
+        "configDtd",
+        "configLoadMode",
+        "configLoadControl",
+      ];
+
+      function setConfigMessage(message, type = "") {
+        const el = $("configMessage");
+        if (!el) return;
+        el.textContent = message;
+        el.className = "config-message" + (type ? " " + type : "");
+      }
+
+      const LAST_CONFIG_STORAGE_KEY = "mppt_last_updated_config";
+
+      function getLastUpdatedConfigs() {
+        try {
+          return JSON.parse(localStorage.getItem(LAST_CONFIG_STORAGE_KEY) || "{}");
+        } catch {
+          return {};
+        }
+      }
+
+      function saveLastUpdatedConfig(imei, config) {
+        if (!imei) return;
+        const all = getLastUpdatedConfigs();
+        all[String(imei)] = {
+          ...config,
+          updatedAt: new Date().toISOString(),
+        };
+        localStorage.setItem(LAST_CONFIG_STORAGE_KEY, JSON.stringify(all));
+      }
+
+      function displayLastUpdatedConfig(imei) {
+        const all = getLastUpdatedConfigs();
+        const config = all[String(imei)];
+
+        $("lastUpdatedLvd").textContent =
+          config && Number.isFinite(Number(config.lvd))
+            ? `${Number(config.lvd).toFixed(2)} V`
+            : "—";
+
+        $("lastUpdatedReconnect").textContent =
+          config && Number.isFinite(Number(config.reconnect))
+            ? `${Number(config.reconnect).toFixed(2)} V`
+            : "—";
+
+        $("lastUpdatedDtd").textContent =
+          config && Number.isFinite(Number(config.dtd))
+            ? `${Number(config.dtd).toFixed(2)} V`
+            : "—";
+
+        $("lastUpdatedLoadMode").textContent =
+          config?.loadMode === 1 ? "Remote (Modbus) control" :
+          config?.loadMode === 0 ? "Software / Auto" : "—";
+
+        $("lastUpdatedLoadControl").textContent =
+          config?.loadMode === 1
+            ? (config.loadControl ? "ON" : "OFF")
+            : "OFF";
+
+        $("lastUpdatedTime").textContent =
+          config?.updatedAt ? formatTime(config.updatedAt) : "—";
+      }
+
+      function getCurrentMatchedRecord() {
+        const wanted = $("imeiInput").value.trim();
+        if (!wanted) return null;
+
+        return getAllRecords().find((r) =>
+          String(r.imei ?? "").trim().toLowerCase().includes(wanted.toLowerCase()),
+        ) || null;
+      }
+
+      function updateConfigButtonState() {
+        const btn = $("configUpdateBtn");
+        if (!btn) return;
+
+        // Configuration can be sent for a manually entered IMEI; a telemetry
+        // record does not have to exist in the dashboard table.
+        btn.disabled = !$("imeiInput").value.trim();
+        if (btn.disabled) setConfigMessage("Enter an IMEI before updating.");
+      }
+
+      function populateConfigFromRecord(record) {
+        if (!record) return;
+
+        // IMPORTANT: LVD, RECONNECT and DTD are user-editable configuration
+        // inputs. Never overwrite them from live MQTT/MySQL telemetry.
+        // Defaults remain 22.60 V, 24.00 V and 27.00 V until the user edits them.
+        // Load mode/control continue to reflect the selected record.
+        $("configLoadMode").value = record.loadMode === "REMOTE" ? "1" : "0";
+        $("configLoadControl").checked = record.loadCommand === "ON";
+        updateLoadControlVisibility();
+        updateLoadControlLabel();
+      }
+
+      function updateLoadControlVisibility() {
+        const mode = $("configLoadMode").value;
+        const loadControlRow = $("loadControlRow");
+        const loadControl = $("configLoadControl");
+
+        if (!loadControlRow || !loadControl) {
+          return;
+        }
+
+        // SOFTWARE / AUTO MODE
+        if (mode === "0") {
+          // Keep LOAD CONTROL visible but disabled
+          loadControlRow.style.display = "flex";
+          loadControl.disabled = true;
+
+          // Force LOAD CONTROL OFF
+          loadControl.checked = false;
+
+          // Update label
+          $("loadControlState").textContent = "OFF";
+        }
+        // REMOTE MODE
+        else if (mode === "1") {
+          // Show LOAD CONTROL and allow ON/OFF
+          loadControlRow.style.display = "flex";
+          loadControl.disabled = false;
+
+          // Keep current ON/OFF state
+          $("loadControlState").textContent = loadControl.checked
+            ? "ON"
+            : "OFF";
+        }
+      }
+
+      function updateLoadControlLabel() {
+        const mode = $("configLoadMode").value;
+        const loadControl = $("configLoadControl");
+
+        if (mode === "0") {
+          loadControl.checked = false;
+          loadControl.disabled = true;
+          $("loadControlState").textContent = "OFF";
+        } else {
+          loadControl.disabled = false;
+          $("loadControlState").textContent =
+            loadControl.checked ? "ON" : "OFF";
+        }
+      }
+
+      // MQTT CONNECTION
+      function setMQTTStatus(message, state) {
+        console.log("MQTT STATUS:", message);
+      }
+      function connectMQTT() {
+        console.log("Connecting to MQTT...");
+
+        mqttClient = mqtt.connect(MQTT_BROKER, {
+          clientId:
+            "MPPT_DASHBOARD_" + Math.random().toString(16).substring(2, 10),
+
+          clean: true,
+
+          connectTimeout: 10000,
+
+          reconnectPeriod: 5000,
+
+          keepalive: 60,
+        });
+
+        mqttClient.on("connect", () => {
+          console.log("MQTT Connected");
+
+          mqttConnected = true;
+
+          setMQTTStatus("MQTT LIVE", "live");
+
+          mqttClient.subscribe(MQTT_TOPIC, { qos: 0 }, (error) => {
+            if (error) {
+              console.error("MQTT Subscribe Error:", error);
+
+              setMQTTStatus("MQTT Subscribe Error", "error");
+
+              return;
+            }
+
+            console.log("Subscribed to:", MQTT_TOPIC);
+          });
+        });
+
+        mqttClient.on("message", (topic, message) => {
+          console.log("MQTT MESSAGE:", topic, message.toString());
+
+          if (topic !== MQTT_TOPIC) {
+            return;
+          }
+
+          handleMQTTMessage(message.toString());
+        });
+
+        mqttClient.on("reconnect", () => {
+          mqttConnected = false;
+          console.log("MQTT Reconnecting...");
+          setMQTTStatus("MQTT Reconnecting...", "connecting");
+        });
+        mqttClient.on("offline", () => {
+          mqttConnected = false;
+          console.log("MQTT Offline");
+          setMQTTStatus("MQTT Offline", "error");
+        });
+
+        mqttClient.on("error", (error) => {
+          console.error("MQTT Error:", error);
+          mqttConnected = false;
+          setMQTTStatus("MQTT Error", "error");
+        });
+      }
+
+      function getConfigurationFilter() {
+        const lvd = parseFloat($("configLvd").value);
+        const reconnect = parseFloat($("configReconnect").value);
+        const dtd = parseFloat($("configDtd").value);
+        const loadMode = Number($("configLoadMode").value);
+        // LOAD CONTROL is allowed only in REMOTE mode
+        const loadControl =
+          loadMode === 1 && $("configLoadControl").checked ? 1 : 0;
+
+        if (
+          !Number.isFinite(lvd) ||
+          !Number.isFinite(reconnect) ||
+          !Number.isFinite(dtd)
+        ) {
+          return null;
+        }
+
+        // Configuration voltage ranges requested for the editable inputs.
+        if (lvd < 21.00 || lvd > 23.00) {
+          setConfigMessage("LVD range is 21.00–23.00 V.", "err");
+          return null;
+        }
+        if (reconnect < 23.00 || reconnect > 25.00) {
+          setConfigMessage("RECONNECT range is 23.00–25.00 V.", "err");
+          return null;
+        }
+        if (dtd < 0.00 || dtd > 30.00) {
+          setConfigMessage("DTD range is 0.00–30.00 V.", "err");
+          return null;
+        }
+
+        return { lvd, reconnect, dtd, loadMode, loadControl };
+      }
+
+     
+async function publishConfigurationUpdate(imei, config) {
+  const payload = {
+    imei: String(imei).trim(),
+    lvd: Number(config.lvd),
+    reconnect: Number(config.reconnect),
+    dtd: Number(config.dtd),
+    load_mode: Number(config.loadMode),
+    load_control: Number(config.loadControl),
+  };
+
+  try {
+    const response = await fetch(CONFIGURATION_API, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    let result = {};
+
+    try {
+      result = await response.json();
+    } catch {
+      // Handle responses that do not contain JSON.
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        result.detail || `Request failed with status ${response.status}`
+      );
+    }
+
+    console.log("Configuration API response:", result);
+
+    setConfigMessage(
+      `Configuration published to ${result.topic || "MQTT broker"}. Device application is not confirmed.`,
+      "ok"
+    );
+
+    return true;
+  } catch (error) {
+    console.error("Configuration API error:", error);
+
+    setConfigMessage(
+      error.message || "Could not send configuration to FastAPI.",
+      "err"
+    );
+
+    return false;
+  }
+}
+
+      async function applyConfigurationFilter() {
+        const imei = $("imeiInput").value.trim();
+        if (!imei) {
+          setConfigMessage("Enter an IMEI before updating.", "err");
+          updateConfigButtonState();
+          return;
+        }
+
+        const config = getConfigurationFilter();
+        if (!config) {
+          if (!$("configMessage").textContent) {
+            setConfigMessage("Enter valid LVD, RECONNECT and DTD values.", "err");
+          }
+          return;
+        }
+
+        // Send configuration to FastAPI, which publishes it to MQTT.
+        if (!(await publishConfigurationUpdate(imei, config))) {
+          return;
+        }
+
+        // Save/display the configuration locally for this IMEI. This is only
+        // a dashboard record; it does not claim that the MPPT device applied it.
+        saveLastUpdatedConfig(imei, config);
+        displayLastUpdatedConfig(imei);
+        
+      }
+
+      function clearConfigurationFilter() {
+        configFilter = null;
+      }
+
+      const $ = (id) => document.getElementById(id);
+
+      function formatTime(v) {
+        if (!v) return "—";
+        const d = new Date(v);
+        if (Number.isNaN(d.getTime())) return String(v);
+        return d.toLocaleString();
+      }
+
+      function parseHexBytes(hex) {
+        if (typeof hex !== "string" || !hex.trim())
+          throw new Error("RS485 data is empty");
+        const parts = hex
+          .trim()
+          .replace(/,/g, " ")
+          .split(/\s+/)
+          .filter(Boolean);
+        const bytes = parts.map((x) => {
+          const n = parseInt(x.replace(/^0x/i, ""), 16);
+          if (!Number.isInteger(n) || n < 0 || n > 255)
+            throw new Error("Invalid hex byte: " + x);
+          return n;
+        });
+        return bytes;
+      }
+
+      function parseRS485(hex) {
+        const bytes = parseHexBytes(hex);
+        if (bytes.length < 44) {
+          throw new Error(
+            `Incomplete Modbus frame: ${bytes.length} bytes; 44 expected`,
+          );
+        }
+
+        const slave = bytes[0];
+        const functionCode = bytes[1];
+        const byteCount = bytes[2];
+
+        const regs = [];
+        for (let i = 0; i < 20; i++) {
+          const p = 3 + i * 2;
+          regs.push((bytes[p] << 8) | bytes[p + 1]);
+        }
+
+        const fault = regs[7];
+
+        return {
+          bytes,
+          slave,
+          functionCode,
+          byteCount,
+          regs,
+          batteryVoltage: regs[0] / 100,
+          batteryCurrent: regs[1] / 100,
+          pvVoltage: regs[2] / 100,
+          pvPower: regs[3],
+          temperature: regs[4] / 100,
+          efficiency: regs[5],
+          configuredSlaveId: regs[6],
+          faultRaw: fault,
+          faultHex: "0x" + fault.toString(16).padStart(4, "0").toUpperCase(),
+          lvdRaw: regs[8],
+          reconnectRaw: regs[9],
+          dtdRaw: regs[10],
+          loadMode: regs[11] === 1 ? "REMOTE" : "AUTO",
+          loadCommand: regs[12] === 1 ? "ON" : "OFF",
+          loadStatus: regs[13] === 1 ? "ON" : "OFF",
+          faultActive: fault !== 0,
+          faultNames: [
+            fault & 1 ? "Battery Over Voltage" : null,
+            fault & 2 ? "LVD" : null,
+            fault & 4 ? "PV Over Voltage" : null,
+            fault & 8 ? "Over Temperature" : null,
+          ].filter(Boolean),
+        };
+      }
+
+      // MQTT MESSAGE HANDLER
+      function handleMQTTMessage(messageText) {
+        console.log("Received MQTT message:");
+        console.log(messageText);
+
+        // 1. Convert MQTT text to JSON
+        let payload;
+        try {
+          payload = JSON.parse(messageText);
+        } catch (error) {
+          console.error("MQTT JSON parse error:", error);
+          setMQTTStatus("MQTT Invalid JSON", "error");
+          return;
+        }
+
+        // 2. Get IMEI
+        const imei = String(payload?.imei ?? "").trim();
+
+        // 3. Get RS485 data
+        const raw = String(payload?.mppt_rs485_data ?? "").trim();
+        console.log("IMEI:", imei);
+        console.log("RS485:", raw);
+
+        // 4. Check whether RS485 data exists
+        if (!raw) {
+          console.log("No RS485 data received");
+          setMQTTStatus(`MQTT LIVE • ${imei} • No RS485 data`, "live");
+          return;
+        }
+
+        // 5. Parse RS485 using EXISTING parser
+        let parsed;
+
+        try {
+          parsed = parseRS485(raw);
+        } catch (error) {
+          console.error("RS485 parsing failed:", error);
+
+          setMQTTStatus("MQTT LIVE • Invalid RS485 frame", "error");
+
+          return;
+        }
+
+        // 6. Create dashboard record
+        const liveRecord = {
+          id: "MQTT-" + ++mqttRecordCounter,
+          type: "MQTT",
+          imei: imei,
+          raw: raw,
+          updatedAt: new Date().toISOString(),
+
+          ...parsed,
+        };
+
+        console.log("LIVE RECORD:", liveRecord);
+
+        // 7. Add MQTT record to dashboard data
+        mqttRecords.unshift(liveRecord);
+
+if (mqttRecords.length > 1000) {
+  mqttRecords = mqttRecords.slice(0, 1000);
+}
+
+saveMQTTRecords();
+
+        // Re-apply the current IMEI/date filters after storing the live record.
+        // A non-matching live record is still retained in localStorage.
+        const filtered = applyDisplayFilters();
+
+        // 10. Display LIVE MQTT data
+        selected = liveRecord;
+
+        render(filtered, []);
+
+        // 11. Update configuration section
+        populateConfigFromRecord(liveRecord);
+
+        updateConfigButtonState();
+
+        // 12. Update MQTT status
+
+        setMQTTStatus(
+          `MQTT LIVE • ${imei} • ${parsed.bytes.length} bytes`,
+          "live",
+        );
+      }
+
+      function parseApiRecord(item, index) {
+        let payload = item?.data;
+
+        // In the shown API response, item.data is a JSON STRING:
+        // "{\"imei\":\"123456789\",\"mppt_rs485_data\":\"...\"}"
+        if (typeof payload === "string") {
+          try {
+            payload = JSON.parse(payload);
+          } catch {
+            // Also accept a direct RS485 string as fallback.
+            payload = { mppt_rs485_data: payload };
+          }
+        }
+
+        const imei = String(payload?.imei ?? item?.imei ?? "");
+        const raw =
+          payload?.mppt_rs485_data ??
+          payload?.mpptRs485Data ??
+          payload?.rs485_data ??
+          payload?.rs485Data ??
+          payload?.rawData;
+
+        // Some API history records may legitimately have no RS485 payload.
+        // They are incomplete records, not dashboard errors, so skip them silently.
+        if (!raw) return null;
+
+        const parsed = parseRS485(raw);
+        return {
+          id: item?.id ?? index,
+          type: item?.type ?? "",
+          imei,
+          raw,
+          updatedAt: item?.updated_at ?? payload?.updated_at ?? "",
+          ...parsed,
+        };
+      }
+
+      function getSource(json) {
+        // Handles the exact API shown in Postman: { status, message, data:[...] }
+        if (Array.isArray(json)) return json;
+        if (Array.isArray(json?.data)) return json.data;
+        if (Array.isArray(json?.result)) return json.result;
+        if (Array.isArray(json?.logs)) return json.logs;
+        throw new Error("API response does not contain a data array");
+      }
+
+      function getFilteredRecords(json) {
+        const source = getSource(json);
+        const records = [];
+        const errors = [];
+        const wanted = String($('imeiInput')?.value ?? '').trim().toLowerCase();
+
+        source.forEach((item, i) => {
+          try {
+            const record = parseApiRecord(item, i);
+            // Ignore API records that do not contain RS485 data.
+            // They must not create a red error banner when the requested IMEI
+            // has valid/live data elsewhere in the dashboard.
+            if (record) records.push(record);
+          } catch (e) {
+            // Only show a parsing error when it belongs to the IMEI currently
+            // being requested. Errors from unrelated historical devices are
+            // not useful to the user applying an IMEI filter.
+            const itemData = typeof item?.data === 'string'
+              ? (() => { try { return JSON.parse(item.data); } catch { return {}; } })()
+              : (item?.data || item || {});
+            const itemImei = String(itemData?.imei ?? item?.imei ?? '').trim().toLowerCase();
+            if (!wanted || !itemImei || itemImei.includes(wanted)) {
+              errors.push(e.message);
+            }
+          }
+        });
+
+        // Keep the complete API history loaded in this page session.
+        // Filters are applied only at display/export time.
+        apiRecords = records.sort(
+          (a, b) =>
+            (new Date(b.updatedAt).getTime() || 0) -
+            (new Date(a.updatedAt).getTime() || 0),
+        );
+
+        const filtered = applyDisplayFilters();
+        return {
+          sourceCount: source.length,
+          filteredCount: filtered.length,
+          records: filtered,
+          errors,
+        };
+      }
+      function startOfDay(d) {
+        const x = new Date(d);
+        x.setHours(0, 0, 0, 0);
+        return x;
+      }
+      function startOfWeek(d) {
+        const x = startOfDay(d),
+          day = x.getDay();
+        x.setDate(x.getDate() - (day === 0 ? 6 : day - 1));
+        return x;
+      }
+      function applyDisplayFilters(records = getAllRecords()) {
+        const wanted = $("imeiInput").value.trim().toLowerCase();
+        let filtered = records;
+        if (wanted) {
+          filtered = filtered.filter((r) =>
+            String(r.imei ?? "").trim().toLowerCase().includes(wanted),
+          );
+        }
+        return applyDateFilter(filtered);
+      }
+
+      function applyDateFilter(records) {
+        const now = new Date();
+        return records.filter((r) => {
+          const t = new Date(r.updatedAt);
+          if (Number.isNaN(t.getTime())) return currentDateFilter === "all";
+          if (currentDateFilter === "all") return true;
+          if (currentDateFilter === "today") return t >= startOfDay(now);
+          if (currentDateFilter === "week") return t >= startOfWeek(now);
+          if (currentDateFilter === "month")
+            return (
+              t.getFullYear() === now.getFullYear() &&
+              t.getMonth() === now.getMonth()
+            );
+          if (currentDateFilter === "year")
+            return t.getFullYear() === now.getFullYear();
+          if (currentDateFilter === "custom") {
+            const from = customFrom ? new Date(customFrom + "T00:00:00") : null,
+              to = customTo ? new Date(customTo + "T23:59:59.999") : null;
+            return (!from || t >= from) && (!to || t <= to);
+          }
+          return true;
+        });
+      }
+
+      function render(records, errors) {
+        currentPageRecords = Array.isArray(records) ? records : [];
+
+        const totalPages = Math.max(
+          1,
+          Math.ceil(currentPageRecords.length / ROWS_PER_PAGE),
+        );
+
+        // Keep the current page during live MQTT updates, but clamp it if
+        // the number of available pages becomes smaller.
+        if (currentPage > totalPages) {
+          currentPage = totalPages;
+        }
+        if (currentPage < 1) {
+          currentPage = 1;
+        }
+
+        $("recordCount").textContent = configFilter
+          ? `${currentPageRecords.length} configuration match${currentPageRecords.length === 1 ? "" : "es"}`
+          : `${currentPageRecords.length} records`;
+
+        $("tableError").innerHTML = errors.length
+          ? `<div class="error">${errors.map((x) => escapeHtml(x)).join("<br>")}</div>`
+          : "";
+
+        const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
+        const pageRecords = currentPageRecords.slice(
+          startIndex,
+          startIndex + ROWS_PER_PAGE,
+        );
+
+        const tbody = $("rows");
+        tbody.innerHTML = "";
+
+        pageRecords.forEach((r) => {
+          const tr = document.createElement("tr");
+          if (selected && selected.id === r.id) tr.className = "selected";
+
+          tr.innerHTML = `
+    <td>${escapeHtml(formatTime(r.updatedAt))}</td>
+    <td>${escapeHtml(r.imei)}</td>
+    <td>${r.batteryVoltage.toFixed(2)} V</td>
+    <td>${r.batteryCurrent.toFixed(2)} A</td>
+    <td>${r.pvVoltage.toFixed(2)} V</td>
+    <td>${r.pvPower} W</td>
+    <td>${r.temperature.toFixed(2)} °C</td>
+    <td>${r.efficiency}%</td>
+    <td>${r.slave}</td>
+    <td>${r.configuredSlaveId}</td>
+    <td>${r.faultRaw}</td>
+    <td class="${r.faultActive ? "bad" : "ok"}">
+        ${r.faultActive ? escapeHtml(r.faultNames.join(", ")) : "No active fault"}
+    </td>
+    <td>${r.lvdRaw}</td>
+    <td>${r.reconnectRaw}</td>
+    <td>${r.dtdRaw}</td>
+    <td>${r.loadMode}</td>
+    <td>${r.loadCommand}</td>
+    <td>${r.loadStatus}</td>
+`;
+
+          tr.onclick = () => {
+            selected = r;
+            render(currentPageRecords, errors);
+            showDetails(r);
+          };
+
+          tbody.appendChild(tr);
+        });
+
+        if (!selected || !currentPageRecords.some((r) => r.id === selected.id)) {
+          selected = currentPageRecords[0] || null;
+        }
+
+        renderPagination(totalPages);
+
+        if (selected) showDetails(selected);
+        else clearDetails();
+      }
+
+      function renderPagination(totalPages) {
+        const pagination = $("tablePagination");
+        const pageButtons = $("pageButtons");
+        const prev = $("prevPageBtn");
+        const next = $("nextPageBtn");
+
+        if (!pagination || !pageButtons || !prev || !next) return;
+
+        // Hide pagination when there are no records or only one page.
+        pagination.style.display =
+          currentPageRecords.length > ROWS_PER_PAGE ? "flex" : "none";
+
+        pageButtons.innerHTML = "";
+        pageButtons.style.display = "flex";
+        pageButtons.style.alignItems = "center";
+        pageButtons.style.gap = "6px";
+        pageButtons.style.flexWrap = "wrap";
+        pageButtons.style.justifyContent = "center";
+
+        const pages = [];
+
+        // Always show the first two pages, current page area,
+        // and last two pages. Ellipses are inserted where needed.
+        const addPage = (page) => {
+          if (page >= 1 && page <= totalPages && !pages.includes(page)) {
+            pages.push(page);
+          }
+        };
+
+        addPage(1);
+        addPage(2);
+
+        for (let page = currentPage - 1; page <= currentPage + 1; page++) {
+          addPage(page);
+        }
+
+        addPage(totalPages - 1);
+        addPage(totalPages);
+
+        pages.sort((a, b) => a - b);
+
+        let previous = null;
+
+        pages.forEach((page) => {
+          if (previous !== null && page - previous > 1) {
+            const dots = document.createElement("span");
+            dots.className = "page-dots";
+            dots.textContent = "…";
+            pageButtons.appendChild(dots);
+          }
+
+          const button = document.createElement("button");
+          button.type = "button";
+          button.textContent = String(page);
+          button.className = page === currentPage ? "active" : "";
+          button.setAttribute(
+            "aria-current",
+            page === currentPage ? "page" : "false",
+          );
+          button.setAttribute("aria-label", `Go to page ${page}`);
+          button.onclick = () => {
+            currentPage = page;
+            render(currentPageRecords, []);
+          };
+
+          pageButtons.appendChild(button);
+          previous = page;
+        });
+
+        const totalRows = currentPageRecords.length;
+        const startRow = totalRows
+          ? (currentPage - 1) * ROWS_PER_PAGE + 1
+          : 0;
+        const endRow = Math.min(currentPage * ROWS_PER_PAGE, totalRows);
+
+        const summary = document.createElement("span");
+        summary.className = "page-summary";
+        summary.textContent = totalRows
+          ? `Rows ${startRow}-${endRow} of ${totalRows} • Page ${currentPage} of ${totalPages}`
+          : "Rows 0 of 0";
+        pageButtons.appendChild(summary);
+
+        prev.disabled = currentPage <= 1;
+        next.disabled = currentPage >= totalPages;
+      }
+
+      function changePage(direction) {
+        const totalPages = Math.max(
+          1,
+          Math.ceil(currentPageRecords.length / ROWS_PER_PAGE),
+        );
+
+        const newPage = currentPage + direction;
+
+        if (newPage < 1 || newPage > totalPages) return;
+
+        currentPage = newPage;
+        render(currentPageRecords, []);
+      }
+
+      function showDetails(r) {
+        // The selected record is highlighted directly in the combined table.
+        // Telemetry cards were removed from the UI; table remains the primary display.
+}
+
+      function clearDetails() {
+}
+
+      function escapeHtml(v) {
+        return String(v).replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      }
+
+      function applyTheme(theme) {
+        const root = document.documentElement;
+        const btn = document.getElementById("themeToggle");
+        root.setAttribute("data-theme", theme);
+        localStorage.setItem("mppt-theme", theme);
+        if (btn) {
+          const light = theme === "light";
+          btn.textContent = light ? "☀" : "◐";
+          btn.title = light ? "Switch to dark theme" : "Switch to light theme";
+          btn.setAttribute(
+            "aria-label",
+            light ? "Switch to dark theme" : "Switch to light theme",
+          );
+        }
+      }
+
+      function toggleTheme() {
+        const current =
+          document.documentElement.getAttribute("data-theme") || "dark";
+        applyTheme(current === "dark" ? "light" : "dark");
+      }
+
+      (function initTheme() {
+        const saved = localStorage.getItem("mppt-theme");
+        applyTheme(saved === "light" ? "light" : "dark");
+      })();
+
+      async function loadData() {
+        const url = $("apiUrl").value.trim() || DEFAULT_API;
+        const wanted = $("imeiInput").value.trim();
+        $("status").textContent = "Fetching...";
+        $("dot").className = "dot";
+
+        try {
+          const response = await fetch(url, {
+            method: "GET",
+            headers: { Accept: "application/json" },
+            cache: "no-store",
+          });
+
+          if (!response.ok)
+            throw new Error(`HTTP ${response.status} ${response.statusText}`);
+
+          const json = await response.json();
+          const result = getFilteredRecords(json);
+
+          selected = result.records[0] || null;
+          currentPage = 1;
+          render(result.records, result.errors);
+
+          const matched = getCurrentMatchedRecord();
+          if (matched) {
+            populateConfigFromRecord(matched);
+          } else {
+            clearConfigurationFilter();
+          }
+          updateConfigButtonState();
+
+          $("status").textContent =
+            `LIVE • ${result.records.length} matched • IMEI ${wanted || "ALL"}`;
+          $("dot").className = "dot live";
+        } catch (e) {
+          console.error("Dashboard API error:", e);
+          $("status").textContent = "API ERROR";
+          $("dot").className = "dot err";
+          const cached = applyDisplayFilters();
+          currentPage = 1;
+          render(cached, []);
+          $("tableError").innerHTML =
+            `<div class="error"><b>Could not load API.</b><br>${escapeHtml(e.message)}<br><br>
+       If this HTML is opened with <b>file://</b>, use VS Code Live Server or another local HTTP server. 
+       The API must also allow CORS from the dashboard origin.</div>`;
+        }
+      }
+
+      function getDateFilterLabel() {
+        return (
+          {
+            all: "All Data",
+            today: "Today",
+            week: "This week",
+            month: "Month",
+            year: "Year",
+            custom: "Custom filter",
+          }[currentDateFilter] || "All Data"
+        );
+      }
+      function toggleSettings() {
+        $("appLayout").classList.toggle("settings-open");
+      }
+      function updateDateFilter() {
+        const r = document.querySelector('input[name="dateFilter"]:checked');
+        currentDateFilter = r ? r.value : "all";
+        document
+          .querySelectorAll(".date-option")
+          .forEach((x) =>
+            x.classList.toggle("active", x.querySelector("input").checked),
+          );
+        $("customDate").classList.toggle(
+          "show",
+          currentDateFilter === "custom",
+        );
+        $("dateFromTop").value = customFrom;
+        $("dateToTop").value = customTo;
+        const allRecords = getAllRecords();
+
+if (allRecords.length) {
+  const f = applyDisplayFilters(allRecords);
+          selected = f[0] || null;
+          render(f, []);
+        }
+      }
+      document
+        .querySelectorAll('input[name="dateFilter"]')
+        .forEach((r) => r.addEventListener("change", updateDateFilter));
+      $("dateFrom").addEventListener("change", (e) => {
+        customFrom = e.target.value;
+        updateDateFilter();
+      });
+      $("dateTo").addEventListener("change", (e) => {
+        customTo = e.target.value;
+        updateDateFilter();
+      });
+
+      
+      let filterApplied = false;
+      let appliedIMEI = "";
+
+      function showRecordsPanel(show) {
+        const panel = $("recordsPanel");
+        if (panel) panel.style.display = show ? "block" : "none";
+      }
+
+      function setFilterMessage(message, type = "error") {
+        const el = $("filterMessage");
+        if (!el) return;
+
+        el.textContent = message;
+        el.style.display = message ? "block" : "none";
+
+        if (type === "ok") {
+          el.className = "config-message ok";
+        } else {
+          el.className = "error";
+        }
+      }
+
+      function getFilteredRecordsForAppliedIMEI() {
+        if (!filterApplied || !appliedIMEI) return [];
+
+        const wanted = appliedIMEI.trim();
+
+        return getAllRecords().filter(
+          (record) => String(record.imei ?? "").trim() === wanted
+        );
+      }
+
+      function applyTopFilter() {
+        const imei = $("imeiInput").value.trim();
+
+        // Do not display the table when no IMEI has been entered.
+        if (!imei) {
+          filterApplied = false;
+          appliedIMEI = "";
+          showRecordsPanel(false);
+          setFilterMessage("");
+          currentPage = 1;
+          render([], []);
+          updateConfigButtonState();
+          return;
+        }
+
+        // The table becomes visible only after this button is clicked.
+        filterApplied = true;
+        appliedIMEI = imei;
+
+        const filtered = getFilteredRecordsForAppliedIMEI();
+
+        if (!filtered.length) {
+          showRecordsPanel(false);
+          setFilterMessage("No data found for this IMEI.");
+          currentPage = 1;
+          render([], []);
+          updateConfigButtonState();
+          return;
+        }
+
+        setFilterMessage("");
+        showRecordsPanel(true);
+
+        // Display all stored records belonging to the selected IMEI,
+        // paginated at exactly 10 rows per page.
+        currentPage = 1;
+        render(filtered, []);
+        updateConfigButtonState();
+      }
+
+      async function exportExcel() {
+        const allRecords = getAllRecords();
+
+if (!allRecords.length) return;
+
+const rows = applyDisplayFilters(allRecords);
+
+        const headers = [
+          "Updated Time",
+          "IMEI",
+          "Battery Voltage (V)",
+          "Battery Current (A)",
+          "PV Voltage (V)",
+          "PV Power (W)",
+          "Temperature (°C)",
+          "Efficiency (%)",
+          "Frame Slave",
+          "Config Slave",
+          "Fault Raw",
+          "Fault Status",
+          "LVD (V)",
+          "Reconnect (V)",
+          "DTD (V)",
+          "Load Mode",
+          "Load Command",
+          "Load Status",
+        ];
+        const data = rows.map((r) => [
+          formatTime(r.updatedAt),
+          r.imei,
+          r.batteryVoltage.toFixed(2),
+          r.batteryCurrent.toFixed(2),
+          r.pvVoltage.toFixed(2),
+          r.pvPower,
+          r.temperature.toFixed(2),
+          r.efficiency,
+          r.slave,
+          r.configuredSlaveId,
+          r.faultRaw,
+          r.faultActive ? r.faultNames.join("; ") : "No active fault",
+          Number(r.lvdRaw ?? 0) / 10,
+          Number(r.reconnectRaw ?? 0) / 10,
+          Number(r.dtdRaw ?? 0) / 10,
+          r.loadMode,
+          r.loadCommand,
+          r.loadStatus,
+        ]);
+        const workbook = new ExcelJS.Workbook();
+
+        const worksheet = workbook.addWorksheet("MPPT Records");
+        worksheet.addRow(headers);
+        data.forEach((row) => {
+          worksheet.addRow(row);
+        });
+
+        // Display configuration voltages with exactly 2 decimal places.
+        worksheet.getColumn(13).numFmt = "0.00"; // LVD (V)
+        worksheet.getColumn(14).numFmt = "0.00"; // Reconnect (V)
+        worksheet.getColumn(15).numFmt = "0.00"; // DTD (V)
+        worksheet.columns.forEach((column, index) => {
+          let maxLength = String(headers[index]).length;
+          column.eachCell({ includeEmpty: true }, (cell) => {
+            if (cell.value !== null && cell.value !== undefined) {
+              const text = String(cell.value);
+              if (text.length > maxLength) {
+                maxLength = text.length;
+              }
+            }
+          });
+          // Add small padding
+          let width = maxLength + 2;
+          // Minimum width
+          if (width < 10) {
+            width = 10;
+          }
+          // Maximum width
+          if (width > 30) {
+            width = 30;
+          }
+          column.width = width;
+        });
+        const headerRow = worksheet.getRow(1);
+        headerRow.height = 38;
+        headerRow.eachCell((cell) => {
+          // Teal / professional blue header
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: {
+              argb: "087EA4",
+            },
+          };
+          // White header text
+          cell.font = {
+            name: "Calibri",
+            size: 11,
+            bold: true,
+            color: {
+              argb: "FFFFFF",
+            },
+          };
+          // Center text
+          cell.alignment = {
+            horizontal: "center",
+            vertical: "middle",
+            wrapText: true,
+          };
+          // Header borders
+          cell.border = {
+            top: {
+              style: "thin",
+              color: {
+                argb: "056078",
+              },
+            },
+            bottom: {
+              style: "thin",
+              color: {
+                argb: "056078",
+              },
+            },
+            left: {
+              style: "thin",
+              color: {
+                argb: "FFFFFF",
+              },
+            },
+            right: {
+              style: "thin",
+              color: {
+                argb: "FFFFFF",
+              },
+            },
+          };
+        });
+        worksheet.eachRow((row, rowNumber) => {
+          if (rowNumber === 1) return;
+          row.height = 22;
+          row.eachCell((cell) => {
+            // White data cells
+            cell.fill = {
+              type: "pattern",
+              pattern: "solid",
+              fgColor: {
+                argb: "FFFFFF",
+              },
+            };
+            // Normal black text
+            cell.font = {
+              name: "Calibri",
+              size: 11,
+              color: {
+                argb: "000000",
+              },
+            };
+            // Data alignment
+            cell.alignment = {
+              horizontal: "left",
+              vertical: "middle",
+              wrapText: false,
+            };
+            // Clean light borders
+            cell.border = {
+              bottom: {
+                style: "thin",
+                color: {
+                  argb: "D9E1E8",
+                },
+              },
+              left: {
+                style: "thin",
+                color: {
+                  argb: "E5E5E5",
+                },
+              },
+              right: {
+                style: "thin",
+                color: {
+                  argb: "E5E5E5",
+                },
+              },
+            };
+          });
+        });
+        worksheet.views = [
+          {
+            state: "frozen",
+            ySplit: 1,
+          },
+        ];
+        worksheet.autoFilter = {
+          from: "A1",
+          to: worksheet.getCell(1, headers.length).address,
+        };
+        const buffer = await workbook.xlsx.writeBuffer();
+
+        const blob = new Blob([buffer], {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `mppt-records-${new Date().toISOString().slice(0, 10)}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+
+      $("imeiInput").addEventListener("change", () => {
+        clearConfigurationFilter();
+        loadData();
+      });
+      $("imeiInput").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          clearConfigurationFilter();
+          loadData();
+        }
+      });
+
+      $("configLoadControl").addEventListener("change", updateLoadControlLabel);
+
+      $("configUpdateBtn").addEventListener("click", applyConfigurationFilter);
+
+      const CONFIG_VOLTAGE_LIMITS = {
+        configLvd: { min: 21.00, max: 23.00, label: "LVD" },
+        configReconnect: { min: 23.00, max: 25.00, label: "RECONNECT" },
+        configDtd: { min: 0.00, max: 30.00, label: "DTD" },
+      };
+
+      ["configLvd", "configReconnect", "configDtd"].forEach((id) => {
+        $(id).addEventListener("input", () => {
+          const limits = CONFIG_VOLTAGE_LIMITS[id];
+          const value = parseFloat($(id).value);
+
+          if (Number.isFinite(value) && (value < limits.min || value > limits.max)) {
+            setConfigMessage(
+              `${limits.label} range is ${limits.min.toFixed(2)}–${limits.max.toFixed(2)} V.`,
+              "err",
+            );
+            return;
+          }
+
+          setConfigMessage("");
+        });
+      });
+
+      $("configLoadMode").addEventListener("change", () => {
+        setConfigMessage("");
+
+        updateLoadControlVisibility();
+      });
+
+      $("imeiInput").addEventListener("input", () => {
+        const matched = getCurrentMatchedRecord();
+        if (matched) {
+          populateConfigFromRecord(matched);
+          displayLastUpdatedConfig(matched.imei);
+        } else {
+          clearConfigurationFilter();
+          displayLastUpdatedConfig("");
+        }
+        updateConfigButtonState();
+      });
+      // Fixed initial defaults; telemetry must not replace these values.
+      if (!$("configLvd").value) $("configLvd").value = "22.60";
+      if (!$("configReconnect").value) $("configReconnect").value = "24.00";
+      if (!$("configDtd").value) $("configDtd").value = "27.00";
+      updateLoadControlVisibility();
+      updateLoadControlLabel();
+      updateConfigButtonState();
+
+      const initialMatchedRecord = getCurrentMatchedRecord();
+      if (initialMatchedRecord) {
+        displayLastUpdatedConfig(initialMatchedRecord.imei);
+      } else {
+        displayLastUpdatedConfig("");
+      }
+
+      // ============================================================
+      // MYSQL DASHBOARD DATA LAYER
+      // ============================================================
+      // The dashboard now treats MySQL/FastAPI as the authoritative
+      // source for table data. MQTT is NOT merged into the table.
+      // ============================================================
+
+      const MYSQL_PAGE_SIZE = 10;
+      let mysqlPage = 1;
+      let mysqlTotal = 0;
+      let mysqlLoading = false;
+
+      function mysqlApiUrl(page = mysqlPage) {
+        const base = (DEFAULT_API || "").trim();
+        const url = new URL(base, window.location.href);
+
+        url.searchParams.set(
+          "limit",
+          String(MYSQL_PAGE_SIZE),
+        );
+
+        url.searchParams.set(
+          "offset",
+          String((page - 1) * MYSQL_PAGE_SIZE),
+        );
+
+        const wanted = $("imeiInput")?.value.trim() || "";
+        if (wanted) {
+          url.searchParams.set("imei", wanted);
+        } else {
+          url.searchParams.delete("imei");
+        }
+
+        if (currentDateFilter === "custom") {
+          if (customFrom) {
+            url.searchParams.set("date_from", customFrom);
+          } else {
+            url.searchParams.delete("date_from");
+          }
+
+          if (customTo) {
+            url.searchParams.set("date_to", customTo);
+          } else {
+            url.searchParams.delete("date_to");
+          }
+        } else {
+          url.searchParams.delete("date_from");
+          url.searchParams.delete("date_to");
+        }
+
+        return url.toString();
+      }
+
+      function mysqlDateRange() {
+        const now = new Date();
+
+        if (currentDateFilter === "today") {
+          const d = now.toISOString().slice(0, 10);
+          return { date_from: d, date_to: d };
+        }
+
+        if (currentDateFilter === "week") {
+          const d = new Date(now);
+          const day = d.getDay();
+          const mondayOffset = day === 0 ? -6 : 1 - day;
+          d.setDate(d.getDate() + mondayOffset);
+
+          const from = d.toISOString().slice(0, 10);
+          const to = now.toISOString().slice(0, 10);
+
+          return { date_from: from, date_to: to };
+        }
+
+        if (currentDateFilter === "month") {
+          const from = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            1,
+          );
+
+          const fromText = [
+            from.getFullYear(),
+            String(from.getMonth() + 1).padStart(2, "0"),
+            "01",
+          ].join("-");
+
+          return {
+            date_from: fromText,
+            date_to: now.toISOString().slice(0, 10),
+          };
+        }
+
+        if (currentDateFilter === "year") {
+          return {
+            date_from: `${now.getFullYear()}-01-01`,
+            date_to: now.toISOString().slice(0, 10),
+          };
+        }
+
+        if (currentDateFilter === "custom") {
+          return {
+            date_from: customFrom || "",
+            date_to: customTo || "",
+          };
+        }
+
+        return {
+          date_from: "",
+          date_to: "",
+        };
+      }
+
+      function normalizeNumber(value) {
+        const n = Number(value);
+        return Number.isFinite(n) ? n : 0;
+      }
+
+      function normalizeFaultNames(value) {
+        if (Array.isArray(value)) return value;
+
+        if (typeof value === "string") {
+          try {
+            const parsed = JSON.parse(value);
+            return Array.isArray(parsed) ? parsed : [String(parsed)];
+          } catch {
+            return value ? [value] : [];
+          }
+        }
+
+        return [];
+      }
+
+      function mapSqlRecord(item, index) {
+        const faultRaw = normalizeNumber(item.fault_raw);
+
+        return {
+          id: item.id ?? `SQL-${index}`,
+          type: "MYSQL",
+          imei: String(item.imei ?? ""),
+          raw: String(item.raw_rs485 ?? ""),
+          updatedAt: item.updated_at ?? item.created_at ?? "",
+
+          batteryVoltage: normalizeNumber(item.battery_voltage),
+          batteryCurrent: normalizeNumber(item.battery_current),
+          pvVoltage: normalizeNumber(item.pv_voltage),
+          pvPower: normalizeNumber(item.pv_power),
+          temperature: normalizeNumber(item.temperature),
+          efficiency: normalizeNumber(item.efficiency),
+
+          slave: normalizeNumber(item.slave_id),
+          functionCode: normalizeNumber(item.function_code),
+          byteCount: normalizeNumber(item.byte_count),
+
+          configuredSlaveId: normalizeNumber(item.configured_slave_id),
+
+          faultRaw,
+          faultHex: String(item.fault_hex ?? ""),
+          faultActive: Boolean(Number(item.fault_active)),
+          faultNames: normalizeFaultNames(item.fault_names),
+
+          lvdRaw: normalizeNumber(item.lvd_raw),
+          reconnectRaw: normalizeNumber(item.reconnect_raw),
+          dtdRaw: normalizeNumber(item.dtd_raw),
+
+          loadMode:
+            String(item.load_mode ?? "").toUpperCase() === "REMOTE"
+              ? "REMOTE"
+              : String(item.load_mode ?? "").toUpperCase() === "AUTO"
+                ? "AUTO"
+                : String(item.load_mode ?? ""),
+
+          loadCommand:
+            Number(item.load_command) === 1 ||
+            String(item.load_command).toUpperCase() === "ON"
+              ? "ON"
+              : "OFF",
+
+          loadStatus:
+            Number(item.load_status) === 1 ||
+            String(item.load_status).toUpperCase() === "ON"
+              ? "ON"
+              : "OFF",
+        };
+      }
+
+      // MySQL is the only table source.
+      getAllRecords = function () {
+        return Array.isArray(apiRecords) ? apiRecords : [];
+      };
+
+      getCurrentMatchedRecord = function () {
+        const wanted = $("imeiInput")?.value.trim().toLowerCase() || "";
+
+        if (!wanted) {
+          return apiRecords[0] || null;
+        }
+
+        return (
+          apiRecords.find(
+            (r) =>
+              String(r.imei ?? "")
+                .trim()
+                .toLowerCase() === wanted,
+          ) || null
+        );
+      };
+
+      renderPagination = function () {
+        const pagination = $("tablePagination");
+        const pageButtons = $("pageButtons");
+        const prev = $("prevPageBtn");
+        const next = $("nextPageBtn");
+
+        if (!pagination || !pageButtons || !prev || !next) return;
+
+        const totalPages = Math.max(
+          1,
+          Math.ceil(mysqlTotal / MYSQL_PAGE_SIZE),
+        );
+
+        pagination.style.display =
+          mysqlTotal > MYSQL_PAGE_SIZE ? "flex" : "none";
+
+        pageButtons.innerHTML = "";
+
+        const pages = [];
+
+        const addPage = (page) => {
+          if (
+            page >= 1 &&
+            page <= totalPages &&
+            !pages.includes(page)
+          ) {
+            pages.push(page);
+          }
+        };
+
+        addPage(1);
+        addPage(2);
+
+        for (
+          let page = mysqlPage - 1;
+          page <= mysqlPage + 1;
+          page++
+        ) {
+          addPage(page);
+        }
+
+        addPage(totalPages - 1);
+        addPage(totalPages);
+
+        pages.sort((a, b) => a - b);
+
+        let previous = null;
+
+        pages.forEach((page) => {
+          if (
+            previous !== null &&
+            page - previous > 1
+          ) {
+            const dots = document.createElement("span");
+            dots.className = "page-dots";
+            dots.textContent = "…";
+            pageButtons.appendChild(dots);
+          }
+
+          const button = document.createElement("button");
+          button.type = "button";
+          button.textContent = String(page);
+          button.className =
+            page === mysqlPage ? "active" : "";
+
+          button.onclick = () => {
+            loadMySQLPage(page);
+          };
+
+          pageButtons.appendChild(button);
+          previous = page;
+        });
+
+        const startRow =
+          mysqlTotal > 0
+            ? (mysqlPage - 1) * MYSQL_PAGE_SIZE + 1
+            : 0;
+
+        const endRow = Math.min(
+          mysqlPage * MYSQL_PAGE_SIZE,
+          mysqlTotal,
+        );
+
+        const summary = document.createElement("span");
+        summary.className = "page-summary";
+        summary.textContent =
+          mysqlTotal > 0
+            ? `Rows ${startRow}-${endRow} of ${mysqlTotal} • Page ${mysqlPage} of ${totalPages}`
+            : "Rows 0 of 0";
+
+        pageButtons.appendChild(summary);
+
+        prev.disabled = mysqlPage <= 1;
+        next.disabled = mysqlPage >= totalPages;
+      };
+
+      // Display-only conversion for raw voltage registers.
+      // Internal/database values remain unchanged (e.g. 220 -> 22.00 V).
+      function formatRawVoltageDisplay(value) {
+        const n = Number(value);
+        return Number.isFinite(n) ? (n / 10).toFixed(2) : "0.00";
+      }
+
+      render = function (records, errors = []) {
+        currentPageRecords = Array.isArray(records)
+          ? records
+          : [];
+
+        $("recordCount").textContent = `${mysqlTotal} records`;
+
+        $("tableError").innerHTML = errors.length
+          ? `<div class="error">${errors
+              .map((x) => escapeHtml(x))
+              .join("<br>")}</div>`
+          : "";
+
+        const tbody = $("rows");
+        if (!tbody) return;
+
+        tbody.innerHTML = "";
+
+        currentPageRecords.forEach((r) => {
+          const tr = document.createElement("tr");
+
+          if (
+            selected &&
+            String(selected.id) === String(r.id)
+          ) {
+            tr.className = "selected";
+          }
+
+          tr.innerHTML = `
+            <td>${escapeHtml(formatTime(r.updatedAt))}</td>
+            <td>${escapeHtml(r.imei)}</td>
+            <td>${normalizeNumber(r.batteryVoltage).toFixed(2)} V</td>
+            <td>${normalizeNumber(r.batteryCurrent).toFixed(2)} A</td>
+            <td>${normalizeNumber(r.pvVoltage).toFixed(2)} V</td>
+            <td>${normalizeNumber(r.pvPower).toFixed(2)} W</td>
+            <td>${normalizeNumber(r.temperature).toFixed(2)} °C</td>
+            <td>${normalizeNumber(r.efficiency).toFixed(2)}%</td>
+            <td>${escapeHtml(r.slave)}</td>
+            <td>${escapeHtml(r.configuredSlaveId)}</td>
+            <td>${escapeHtml(r.faultRaw)}</td>
+            <td class="${r.faultActive ? "bad" : "ok"}">
+              ${
+                r.faultActive
+                  ? escapeHtml(r.faultNames.join(", "))
+                  : "No active fault"
+              }
+            </td>
+            <td>${formatRawVoltageDisplay(r.lvdRaw)} V</td>
+            <td>${formatRawVoltageDisplay(r.reconnectRaw)} V</td>
+            <td>${formatRawVoltageDisplay(r.dtdRaw)} V</td>
+            <td>${escapeHtml(r.loadMode)}</td>
+            <td>${escapeHtml(r.loadCommand)}</td>
+            <td>${escapeHtml(r.loadStatus)}</td>
+          `;
+
+          tr.onclick = () => {
+            selected = r;
+            render(currentPageRecords, []);
+            showDetails(r);
+          };
+
+          tbody.appendChild(tr);
+        });
+
+        renderPagination();
+
+        if (selected) {
+          showDetails(selected);
+        } else if (currentPageRecords.length) {
+          selected = currentPageRecords[0];
+          showDetails(selected);
+        } else {
+          clearDetails();
+        }
+      };
+
+      async function loadMySQLPage(page = 1) {
+        if (mysqlLoading) return;
+
+        mysqlLoading = true;
+        mysqlPage = Math.max(1, Number(page) || 1);
+
+        $("status").textContent = "MYSQL • Fetching...";
+        $("dot").className = "dot";
+
+        try {
+          const url = new URL(
+            DEFAULT_API,
+            window.location.href,
+          );
+
+          url.searchParams.set(
+            "limit",
+            String(MYSQL_PAGE_SIZE),
+          );
+
+          url.searchParams.set(
+            "offset",
+            String(
+              (mysqlPage - 1) *
+                MYSQL_PAGE_SIZE,
+            ),
+          );
+
+          const wanted =
+            $("imeiInput")?.value.trim() || "";
+
+          if (wanted) {
+            url.searchParams.set("imei", wanted);
+          }
+
+          const range = mysqlDateRange();
+
+          if (range.date_from) {
+            url.searchParams.set(
+              "date_from",
+              range.date_from,
+            );
+          }
+
+          if (range.date_to) {
+            url.searchParams.set(
+              "date_to",
+              range.date_to,
+            );
+          }
+
+          const response = await fetch(
+            url.toString(),
+            {
+              method: "GET",
+              headers: {
+                Accept: "application/json",
+              },
+              cache: "no-store",
+            },
+          );
+
+          if (!response.ok) {
+            throw new Error(
+              `HTTP ${response.status} ${response.statusText}`,
+            );
+          }
+
+          const json = await response.json();
+
+          if (
+            !json ||
+            !Array.isArray(json.data)
+          ) {
+            throw new Error(
+              "FastAPI response does not contain data[]",
+            );
+          }
+
+          mysqlTotal = Number(json.total) || 0;
+
+          apiRecords = json.data.map(
+            mapSqlRecord,
+          );
+
+          mqttRecords = [];
+
+          selected = apiRecords[0] || null;
+
+          render(apiRecords, []);
+
+          $("status").textContent =
+            `MYSQL LIVE • ${mysqlTotal} matching records`;
+
+          $("dot").className = "dot live";
+
+          if (selected) {
+            populateConfigFromRecord(selected);
+            displayLastUpdatedConfig(
+              selected.imei,
+            );
+          } else {
+            clearConfigurationFilter();
+            displayLastUpdatedConfig("");
+          }
+
+          updateConfigButtonState();
+
+          if (filterApplied && mysqlTotal === 0) {
+            setFilterMessage(
+              "No data found for this IMEI/date filter.",
+            );
+          } else {
+            setFilterMessage("");
+          }
+        } catch (error) {
+          console.error(
+            "MySQL dashboard API error:",
+            error,
+          );
+
+          apiRecords = [];
+          mysqlTotal = 0;
+          selected = null;
+
+          render([], []);
+
+          $("status").textContent =
+            "MYSQL API ERROR";
+
+          $("dot").className = "dot err";
+
+          $("tableError").innerHTML = `
+            <div class="error">
+              <b>Could not load MySQL data.</b><br>
+              ${escapeHtml(error.message)}<br><br>
+              Check that FastAPI is running on
+              <b>127.0.0.1:8000</b> and that MySQL is connected.
+            </div>
+          `;
+        } finally {
+          mysqlLoading = false;
+        }
+      }
+
+      // Replace the old API loader.
+      loadData = function () {
+        return loadMySQLPage(1);
+      };
+
+      changePage = function (direction) {
+        const totalPages = Math.max(
+          1,
+          Math.ceil(mysqlTotal / MYSQL_PAGE_SIZE),
+        );
+
+        const newPage =
+          mysqlPage + Number(direction);
+
+        if (
+          newPage < 1 ||
+          newPage > totalPages
+        ) {
+          return;
+        }
+
+        loadMySQLPage(newPage);
+      };
+
+      applyTopFilter = function () {
+        const imei = $("imeiInput")?.value.trim() || "";
+
+        if (!imei) {
+          filterApplied = false;
+          appliedIMEI = "";
+          showRecordsPanel(false);
+          setFilterMessage("");
+          apiRecords = [];
+          mqttRecords = [];
+          mysqlTotal = 0;
+          selected = null;
+          render([], []);
+          updateConfigButtonState();
+          return;
+        }
+
+        if (!/^\d+$/.test(imei)) {
+          setFilterMessage("IMEI must contain digits only.");
+          showRecordsPanel(false);
+          return;
+        }
+
+        filterApplied = true;
+        appliedIMEI = imei;
+        setFilterMessage("");
+        showRecordsPanel(true);
+        loadMySQLPage(1);
+      };
+
+      clearTopFilter = function () {
+        // Clear the IMEI and date filters.
+        $("imeiInput").value = "";
+        if ($("dateFromTop")) $("dateFromTop").value = "";
+        if ($("dateToTop")) $("dateToTop").value = "";
+        if ($("dateFrom")) $("dateFrom").value = "";
+        if ($("dateTo")) $("dateTo").value = "";
+
+        customFrom = "";
+        customTo = "";
+        currentDateFilter = "all";
+        filterApplied = false;
+        appliedIMEI = "";
+        currentPage = 1;
+        mysqlPage = 1;
+        mysqlTotal = 0;
+        selected = null;
+        apiRecords = [];
+        mqttRecords = [];
+
+        const radio = document.querySelector(
+          'input[name="dateFilter"][value="all"]'
+        );
+        if (radio) radio.checked = true;
+
+        document.querySelectorAll(".date-option").forEach((option) => {
+          const input = option.querySelector("input");
+          if (input) option.classList.toggle("active", input.checked);
+        });
+
+        $("customDate")?.classList.remove("show");
+        showRecordsPanel(false);
+        setFilterMessage("");
+        if ($("tableError")) $("tableError").innerHTML = "";
+        render([], []);
+        updateConfigButtonState();
+        displayLastUpdatedConfig("");
+      };
+
+      updateDateFilter = function () {
+        const selectedRadio =
+          document.querySelector(
+            'input[name="dateFilter"]:checked',
+          );
+
+        currentDateFilter =
+          selectedRadio
+            ? selectedRadio.value
+            : "all";
+
+        document
+          .querySelectorAll(".date-option")
+          .forEach((x) => {
+            const input =
+              x.querySelector("input");
+
+            if (input) {
+              x.classList.toggle(
+                "active",
+                input.checked,
+              );
+            }
+          });
+
+        $("customDate")?.classList.toggle(
+          "show",
+          currentDateFilter === "custom",
+        );
+
+        if ($("dateFromTop")) {
+          $("dateFromTop").value = customFrom;
+        }
+
+        if ($("dateToTop")) {
+          $("dateToTop").value = customTo;
+        }
+
+        loadMySQLPage(1);
+      };
+
+      // Date controls now query MySQL instead of filtering browser memory.
+      document
+        .querySelectorAll(
+          'input[name="dateFilter"]',
+        )
+        .forEach((radio) => {
+          radio.addEventListener(
+            "change",
+            updateDateFilter,
+          );
+        });
+
+      if ($("dateFrom")) {
+        $("dateFrom").addEventListener("change", (event) => {
+          customFrom = event.target.value;
+          currentDateFilter = "custom";
+          // Do not reload until Apply Filter is clicked.
+        });
+      }
+
+      if ($("dateTo")) {
+        $("dateTo").addEventListener("change", (event) => {
+          customTo = event.target.value;
+          currentDateFilter = "custom";
+          // Do not reload until Apply Filter is clicked.
+        });
+      }
+
+      if ($("dateFromTop")) {
+        $("dateFromTop").addEventListener("change", (event) => {
+          customFrom = event.target.value;
+          currentDateFilter = "custom";
+          // Wait for Apply Filter before refreshing the table.
+        });
+      }
+
+      if ($("dateToTop")) {
+        $("dateToTop").addEventListener("change", (event) => {
+          customTo = event.target.value;
+          currentDateFilter = "custom";
+          // Wait for Apply Filter before refreshing the table.
+        });
+      }
+
+      // IMEI changes now query MySQL instead of filtering only
+      // the currently loaded browser records.
+      $("imeiInput").oninput = function () {
+        clearConfigurationFilter();
+        updateConfigButtonState();
+      };
+
+      $("imeiInput").onkeydown = function (event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          applyTopFilter();
+        }
+      };
+
+      // ------------------------------------------------------------
+      // Auto refresh
+      // ------------------------------------------------------------
+      // Fetch the current MySQL page every 5 seconds.
+      // This updates the dashboard without downloading the whole table.
+      if (window.mpptMysqlRefreshTimer) {
+        clearInterval(
+          window.mpptMysqlRefreshTimer,
+        );
+      }
+
+      window.mpptMysqlRefreshTimer = setInterval(() => {
+        // Do not reload or reveal the records table until Apply Filter is used.
+        if (!mysqlLoading && filterApplied && appliedIMEI) {
+          loadMySQLPage(mysqlPage);
+        }
+      }, 30000);
+
+      // Dashboard telemetry comes from FastAPI/MySQL only.
+// Do not start a browser MQTT subscription.
+mqttConnected = false;
+
+// Load telemetry from the database through FastAPI.
+loadMySQLPage(1);
+
+    </script>
+  
+<script>
+/* ============================================================
+   FIX: EXPORT ALL FILTERED MYSQL RECORDS
+   The table is paginated (10 rows/page), so getAllRecords()
+   only contains the current page. Export must query FastAPI
+   repeatedly and collect ALL records matching the active
+   IMEI/date filters.
+   ============================================================ */
+window.exportExcel = async function () {
+  const EXPORT_PAGE_SIZE = 100;
+  const base = (DEFAULT_API || "").trim();
+
+  if (!base) {
+    alert("FastAPI API URL is not configured.");
+    return;
+  }
+
+  const button = document.querySelector(".export-btn");
+  const originalText = button ? button.innerHTML : "";
+
+  try {
+    if (button) {
+      button.disabled = true;
+      button.innerHTML = "⏳ Exporting...";
+    }
+
+    const buildExportUrl = (offset) => {
+      const url = new URL(base, window.location.href);
+
+      url.searchParams.set("limit", String(EXPORT_PAGE_SIZE));
+      url.searchParams.set("offset", String(offset));
+
+      const imei = $("imeiInput")?.value.trim() || "";
+      if (imei) {
+        url.searchParams.set("imei", imei);
+      } else {
+        url.searchParams.delete("imei");
+      }
+
+      // Use exactly the same date range as the dashboard table.
+      const range = mysqlDateRange();
+
+      if (range.date_from) {
+        url.searchParams.set("date_from", range.date_from);
+      } else {
+        url.searchParams.delete("date_from");
+      }
+
+      if (range.date_to) {
+        url.searchParams.set("date_to", range.date_to);
+      } else {
+        url.searchParams.delete("date_to");
+      }
+
+      return url.toString();
+    };
+
+    // First request gets the total number of records matching
+    // the current IMEI/date filter.
+    const firstResponse = await fetch(buildExportUrl(0), {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+    });
+
+    if (!firstResponse.ok) {
+      throw new Error(
+        `FastAPI export request failed: HTTP ${firstResponse.status}`
+      );
+    }
+
+    const firstJson = await firstResponse.json();
+
+    if (!firstJson || !Array.isArray(firstJson.data)) {
+      throw new Error("FastAPI export response does not contain data[].");
+    }
+
+    const total = Number(firstJson.total) || 0;
+    const allRecords = [...firstJson.data];
+
+    // Fetch all remaining pages.
+    for (
+      let offset = EXPORT_PAGE_SIZE;
+      offset < total;
+      offset += EXPORT_PAGE_SIZE
+    ) {
+      if (button) {
+        const fetched = Math.min(allRecords.length, total);
+        button.innerHTML = `⏳ Exporting ${fetched}/${total}...`;
+      }
+
+      const response = await fetch(buildExportUrl(offset), {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `FastAPI export request failed at offset ${offset}: HTTP ${response.status}`
+        );
+      }
+
+      const json = await response.json();
+
+      if (!json || !Array.isArray(json.data)) {
+        throw new Error(
+          `Invalid FastAPI response at offset ${offset}.`
+        );
+      }
+
+      allRecords.push(...json.data);
+    }
+
+    if (!allRecords.length) {
+      alert("No records found for the current filter.");
+      return;
+    }
+
+    const headers = [
+      "Updated Time",
+      "IMEI",
+      "Battery Voltage (V)",
+      "Battery Current (A)",
+      "PV Voltage (V)",
+      "PV Power (W)",
+      "Temperature (°C)",
+      "Efficiency (%)",
+      "Frame Slave",
+      "Config Slave",
+      "Fault Raw",
+      "Fault Status",
+      "LVD (V)",
+      "Reconnect (V)",
+      "DTD (V)",
+      "Load Mode",
+      "Load Command",
+      "Load Status",
+    ];
+
+    const data = allRecords.map((r) => {
+      const mapped = mapSqlRecord(r);
+
+      return [
+        formatTime(mapped.updatedAt),
+        mapped.imei || "",
+        Number(mapped.batteryVoltage || 0).toFixed(2),
+        Number(mapped.batteryCurrent || 0).toFixed(2),
+        Number(mapped.pvVoltage || 0).toFixed(2),
+        Number(mapped.pvPower || 0),
+        Number(mapped.temperature || 0).toFixed(2),
+        Number(mapped.efficiency || 0),
+        mapped.slave ?? "",
+        mapped.configuredSlaveId ?? "",
+        mapped.faultRaw ?? "",
+        mapped.faultActive
+          ? (mapped.faultNames || []).join("; ")
+          : "No active fault",
+        Number(mapped.lvdRaw ?? 0) / 10,
+        Number(mapped.reconnectRaw ?? 0) / 10,
+        Number(mapped.dtdRaw ?? 0) / 10,
+        mapped.loadMode ?? "",
+        mapped.loadCommand ?? "",
+        mapped.loadStatus ?? "",
+      ];
+    });
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("MPPT Records");
+
+    worksheet.addRow(headers);
+    data.forEach((row) => worksheet.addRow(row));
+
+    // Display configuration voltages with exactly 2 decimal places.
+    worksheet.getColumn(13).numFmt = "0.00"; // LVD (V)
+    worksheet.getColumn(14).numFmt = "0.00"; // Reconnect (V)
+    worksheet.getColumn(15).numFmt = "0.00"; // DTD (V)
+
+    worksheet.columns.forEach((column, index) => {
+      let maxLength = String(headers[index]).length;
+
+      column.eachCell({ includeEmpty: true }, (cell) => {
+        if (cell.value !== null && cell.value !== undefined) {
+          maxLength = Math.max(
+            maxLength,
+            String(cell.value).length
+          );
+        }
+      });
+
+      column.width = Math.min(Math.max(maxLength + 2, 10), 30);
+    });
+
+    const headerRow = worksheet.getRow(1);
+    headerRow.height = 38;
+
+    headerRow.eachCell((cell) => {
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "087EA4" },
+      };
+
+      cell.font = {
+        name: "Calibri",
+        size: 11,
+        bold: true,
+        color: { argb: "FFFFFF" },
+      };
+
+      cell.alignment = {
+        horizontal: "center",
+        vertical: "middle",
+        wrapText: true,
+      };
+
+      cell.border = {
+        top: {
+          style: "thin",
+          color: { argb: "056078" },
+        },
+        bottom: {
+          style: "thin",
+          color: { argb: "056078" },
+        },
+        left: {
+          style: "thin",
+          color: { argb: "FFFFFF" },
+        },
+        right: {
+          style: "thin",
+          color: { argb: "FFFFFF" },
+        },
+      };
+    });
+
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) return;
+
+      row.height = 22;
+
+      row.eachCell((cell) => {
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFFFFF" },
+        };
+
+        cell.font = {
+          name: "Calibri",
+          size: 11,
+          color: { argb: "000000" },
+        };
+
+        cell.alignment = {
+          horizontal: "left",
+          vertical: "middle",
+          wrapText: false,
+        };
+
+        cell.border = {
+          bottom: {
+            style: "thin",
+            color: { argb: "D9E1E8" },
+          },
+          left: {
+            style: "thin",
+            color: { argb: "E5E5E5" },
+          },
+          right: {
+            style: "thin",
+            color: { argb: "E5E5E5" },
+          },
+        };
+      });
+    });
+
+    worksheet.views = [
+      {
+        state: "frozen",
+        ySplit: 1,
+      },
+    ];
+
+    worksheet.autoFilter = {
+      from: "A1",
+      to: worksheet.getCell(1, headers.length).address,
+    };
+
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    const blob = new Blob([buffer], {
+      type:
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+
+    a.href = url;
+    a.download =
+      `mppt-records-filtered-${new Date()
+        .toISOString()
+        .slice(0, 10)}.xlsx`;
+
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    URL.revokeObjectURL(url);
+
+    alert(
+      `Excel export complete.\n\nExported ${allRecords.length} of ${total} matching records.`
+    );
+  } catch (error) {
+    console.error("Excel export error:", error);
+    alert(`Excel export failed:\n\n${error.message}`);
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.innerHTML = originalText;
+    }
+  }
+};
+</script>
+
+</body>
+</html>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const imeiInput = document.getElementById("imeiInput");
+  if (imeiInput) {
+    imeiInput.addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        applyTopFilter();
+      }
+    });
+  }
+});
+</script>
